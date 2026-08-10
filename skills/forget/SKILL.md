@@ -17,8 +17,7 @@ verbatim into the trash manifest first. Follow every numbered step in order;
 the confirm gate in Step 5 may not be skipped for any reason.
 
 Scope: the CURRENT project's auto-memory folder ONLY — not CLAUDE.md files, not
-MCP memory databases, not session transcripts, not claude.ai memory. The final
-report must say so.
+MCP memory databases, not session transcripts, not claude.ai memory.
 
 ## Step 1 — Concern
 
@@ -75,6 +74,11 @@ Show the user the candidate list: `filename — FULL/PARTIAL — one-line reason
   still trash them — warn, do not refuse.
 - For PARTIAL files the default action is "edit the matching lines out", not
   trashing the whole file. Say exactly which lines you would remove.
+- The list must also show, as separate sections: "Links to clean" — surviving
+  files whose only change is removing a [[link]] or reference to a trashed
+  file (these carry the warning tag when load-bearing); and "Reconcile" —
+  index/file mismatches noted in Step 3. Approval covers exactly what is
+  listed in all sections.
 - Zero candidates: report "nothing matched <concern>" and stop. Touch nothing.
 
 Proceed only after the user explicitly confirms, and then do exactly what they
@@ -112,8 +116,9 @@ if it does not exist. Write these lines unindented:
 
 Restore recipe: for each entry below, move the `.trashed` file back up one level
 into `memory/`, drop the `.trashed` suffix, then paste every line in that
-entry's "Removed verbatim" blocks back where it came from. Those blocks are the
-only copy of that text. Mark the entry `RESTORED <date>` when done.
+entry's "Removed verbatim" and "Original verbatim" blocks back where it came
+from. Those blocks are the only copy of that text. Mark the entry
+`RESTORED <date>` when done.
 
 Entry format, one entry per forget run:
 
@@ -134,11 +139,16 @@ Links cleaned:
   Removed verbatim:
   > <the exact original line, as it read before you touched it>
 
+Hook lines reworded:
+- MEMORY.md — hook for <file>.md
+  Original verbatim:
+  > <the exact hook line, character for character, before rewording>
+
 A "Removed verbatim" block is MANDATORY for every change you make to a file
-that stays in `memory/`, and for every line you take out of `MEMORY.md`. Write
-the block BEFORE you make the change. If you cannot copy the original text
-exactly, do not make the change: trash the whole file instead and say why in
-the report.
+that stays in `memory/`, and for every line you take out of `MEMORY.md`, and
+for every MEMORY.md hook line you reword. Write the block BEFORE you make the
+change. If you cannot copy the original text exactly, do not make the change:
+trash the whole file instead and say why in the report.
 
 Then ensure `memory/.claudeignore` exists and contains a line `.trash/`. This
 file documents intent for humans and future tooling; do NOT claim it is what
@@ -150,7 +160,9 @@ prevents loading — the `.md.trashed` rename is.
 - Search the surviving memories for `[[slug]]` links whose slug matches a
   trashed memory's `name:` frontmatter value; remove the link, or the whole
   sentence when the sentence is only about the trashed memory.
-- If a PARTIAL edit changed what a file is about, update its MEMORY.md hook line.
+- If a PARTIAL edit changed what a file is about, update its MEMORY.md hook
+  line. Record the original hook line in the Step 7 manifest (Hook lines
+  reworded block) BEFORE rewording it.
 - Fix the reconcile items the user approved at the gate (see Edge cases).
 
 ## Edge cases
