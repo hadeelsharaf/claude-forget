@@ -15,7 +15,7 @@
 - The skill NEVER deletes files; trash + rename is the only removal. Never touches files outside the memory directory. Never trashes MEMORY.md.
 - The confirm gate is mandatory and happens exactly once per run.
 - `.claudeignore` is written but must never be described (in skill text, README, or reports) as the thing that prevents loading — the `.md.trashed` rename is.
-- All file text is plain ASCII except where fixture content deliberately tests normal prose. Commit messages: one line, plain ASCII, no emojis, no co-author lines.
+- Commit messages are plain ASCII; file content may use em dashes and other normal prose punctuation (real MEMORY.md index lines use them). Commit messages: one line, plain ASCII, no emojis, no co-author lines.
 - SKILL.md body stays under 200 lines (spec: checklist-strict, small).
 - JSON files must parse (verify with PowerShell `ConvertFrom-Json` or `python -m json.tool`).
 
