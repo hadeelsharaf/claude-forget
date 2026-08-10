@@ -22,8 +22,8 @@ Expected candidates at the gate:
 - project_widget_exporter_plan.md — FULL
 - project_widget_exporter_poc_results.md — FULL
 - project_dashboard_redesign.md — PARTIAL (one deferred-button line mentions it)
-- feedback_csv_quoting_lesson.md — WARN + link-only edit (the lesson survives;
-  only the [[link]] is removed)
+- feedback_csv_quoting_lesson.md — appears under "Links to clean", WARN tag
+  (link-only edit; the lesson survives)
 
 ## Assertions after the run
 
