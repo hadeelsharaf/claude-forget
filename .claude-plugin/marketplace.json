@@ -1,0 +1,11 @@
+{
+  "name": "claude-memory-tools",
+  "owner": { "name": "Hadeel Sharaf" },
+  "plugins": [
+    {
+      "name": "memory-tools",
+      "source": "./",
+      "description": "Memory hygiene for Claude Code auto-memory: /forget moves memories about discarded efforts to a reversible trash and re-indexes MEMORY.md."
+    }
+  ]
+}
