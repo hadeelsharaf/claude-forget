@@ -1,0 +1,5 @@
+- [Widget exporter plan](project_widget_exporter_plan.md) — CSV/XLSX export design, approved
+- [Widget exporter POC results](project_widget_exporter_poc_results.md) — 2x faster than baseline
+- [LESSON: CSV quoting](feedback_csv_quoting_lesson.md) — always quote fields with commas
+- [Dashboard redesign](project_dashboard_redesign.md) — dark theme approved; widget export button deferred
+- [CI dashboard URL](reference_ci_dashboard_url.md) — where the build dashboard lives
