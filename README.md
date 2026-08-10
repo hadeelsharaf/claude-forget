@@ -18,8 +18,9 @@ Force-forget a discarded effort, reversibly. It:
    `.trash/` listed in `memory/.claudeignore`.
 5. Re-indexes `MEMORY.md` and cleans dangling `[[links]]`.
 
-Nothing is ever deleted. Restore = move the file back, drop the `.trashed`
-suffix, re-add its index line.
+No memory file is ever deleted. Any text cut from a file that stays behind is
+copied verbatim into `.trash/TRASH.md` before the cut. Restore = move the file
+back, drop the `.trashed` suffix, and paste the manifest's verbatim block back.
 
 Note on the mechanism: only `MEMORY.md` auto-loads each session, and topic
 files are read on demand. The `.md.trashed` rename is what guarantees trashed
