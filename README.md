@@ -41,6 +41,21 @@ documentation of intent, not the enforcement.
 /plugin install memory-tools@claude-forget
 ```
 
+The same commands work from a terminal: `claude plugin marketplace add ...`
+and `claude plugin install ...`.
+
+Already installed? A second install fails with "is already installed
+globally". That is expected — the plugin is on your machine. To get the
+latest version instead:
+
+```
+claude plugin marketplace update claude-forget
+claude plugin update memory-tools@claude-forget
+```
+
+(restart Claude Code to apply). To remove it:
+`claude plugin uninstall memory-tools@claude-forget`.
+
 For local testing from a clone:
 
 ```
