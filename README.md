@@ -1,4 +1,4 @@
-# claude-memory-tools
+# claude-forget
 
 Memory hygiene skills for Claude Code auto-memory.
 
@@ -37,15 +37,15 @@ documentation of intent, not the enforcement.
 ## Install
 
 ```
-/plugin marketplace add OWNER/claude-memory-tools
-/plugin install memory-tools@claude-memory-tools
+/plugin marketplace add hadeelsharaf/claude-forget
+/plugin install memory-tools@claude-forget
 ```
 
-For local testing before publishing:
+For local testing from a clone:
 
 ```
-/plugin marketplace add D:\path\to\claude-memory-tools
-/plugin install memory-tools@claude-memory-tools
+/plugin marketplace add D:\path\to\claude-forget
+/plugin install memory-tools@claude-forget
 ```
 
 ## Testing
