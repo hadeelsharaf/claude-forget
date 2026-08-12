@@ -20,7 +20,7 @@ check() {
 
 expected='[memory-tools] 1 memory file(s) past their review-after date - treat their contents as unverified:
 - project_build_pipeline_status.md (review-after 2026-07-01)
-Run /checkup to refresh, archive, or forget them.'
+Ask the user to run /checkup to refresh, mark historical, or forget them; do not edit memory files yourself.'
 
 # Case 1: overdue stamp reported; fresh stamp and unstamped files silent;
 # an overdue file planted in .trash/ must never be scanned.
