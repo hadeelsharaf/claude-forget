@@ -6,9 +6,12 @@ Run the relevant part after every edit to `skills/*/SKILL.md` or `hooks/`.
 
 ### Setup
 
-0. I11 out-of-tree guard: snapshot `Get-FileHash` of every file under
-   `$HOME\.claude\projects\*\memory` (all projects), for example:
-   `Get-ChildItem $HOME\.claude\projects\*\memory -Recurse -File | Get-FileHash | Sort-Object Path | Format-Table -Auto > snapshot-before.txt`.
+0. I11 out-of-tree guard: snapshot every file under
+   `$HOME/.claude/projects/*/memory` (all projects), for example (git-bash):
+   `find "$HOME/.claude/projects" -type f -path "*/memory/*" -print0 | sort -z | xargs -0 sha256sum > snapshot-before.txt`.
+   Do not use the PowerShell 5.1 `Get-ChildItem -Recurse -File` wildcard
+   form — in that environment it silently returns zero rows, which makes the
+   snapshot comparison pass vacuously.
    Keep this snapshot; you diff it against a matching after-snapshot once the
    run finishes, to prove the run never wrote outside `tests/scratch/`.
 1. Copy `tests/fixture-memory-baseline/` to `tests/scratch/memory/` (fresh copy,
@@ -64,9 +67,9 @@ J. `git status --porcelain` shows nothing outside `tests/scratch/`.
    (PowerShell: `Get-FileHash` both trees, ignoring `.trash/` and
    `.claudeignore`). Every hash must match (11/11 files): the forget is
    proven reversible.
-5. I11 out-of-tree guard: take the after-snapshot with the same `Get-FileHash`
-   one-liner as step 0 and `fc` it against `snapshot-before.txt`. The two
-   snapshots must be identical.
+5. I11 out-of-tree guard: take the after-snapshot with the same command as
+   step 0 and `diff` it against `snapshot-before.txt`. The two snapshots
+   must be identical.
 
 ## Part 2 — hook test (scripted)
 
@@ -87,8 +90,8 @@ silent with exit 0.
 
 ### Setup
 
-0. I11 out-of-tree guard: snapshot `Get-FileHash` of every file under
-   `$HOME\.claude\projects\*\memory` (all projects) — same one-liner as
+0. I11 out-of-tree guard: snapshot every file under
+   `$HOME/.claude/projects/*/memory` (all projects) — same command as
    Part 1 step 0 — and keep it for the after-comparison.
 1. Copy `tests/fixture-memory-baseline/` to `tests/scratch/memory/` (fresh
    copy, delete any previous scratch). Keep the scratch tree afterwards.
@@ -127,10 +130,12 @@ K. Build file: the three old status lines are gone, the new truth is present,
    under `Added`.
 L. Login file: the banner line sits directly after the frontmatter and reads
    `> HISTORICAL as of <today> - describes past state; do not act on it.`;
-   its MEMORY.md hook now starts with `HISTORICAL —`; the original hook line
-   is in the manifest under `Hook lines reworded` / `Original verbatim`;
-   restoring this entry strips exactly one leading `> ` from each recorded
-   line.
+   the inserted blank line follows the banner, and the pre-existing blank
+   line after that is untouched baseline content, not a newly inserted
+   line; its MEMORY.md hook now starts with `HISTORICAL —`; the original
+   hook line is in the manifest under `Hook lines reworded` /
+   `Original verbatim`; restoring this entry strips exactly one leading
+   `> ` from each recorded line.
 M. `project_release_checklist_status.md` and every Part 1 file are
    byte-identical to baseline.
 N. No file was moved or deleted; `.trash/` contains only `TRASH.md`.
@@ -154,9 +159,10 @@ Q. Manifest recording obeys the recording rule: the HISTORICAL banner
 
 ## Part 4 — cold-model test (mandatory before release)
 
-I11 out-of-tree guard: snapshot `Get-FileHash` of every file under
-`$HOME\.claude\projects\*\memory` before handing the fixture to the cold
-agent, and again after it finishes; the two snapshots must be identical.
+I11 out-of-tree guard: snapshot every file under
+`$HOME/.claude/projects/*/memory` (same command as Part 1 step 0) before
+handing the fixture to the cold agent, and again after it finishes; the two
+snapshots must be identical.
 
 Hand a FRESH agent only the shipped `skills/checkup/SKILL.md` text and the
 scratch fixture path; it must reach the same Part 3 gate table and, after the

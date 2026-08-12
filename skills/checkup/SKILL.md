@@ -105,11 +105,13 @@ Work file by file. Write the Step 7 manifest blocks BEFORE each change.
   may only prepend nothing and append nothing. Use a surgical edit — never
   rewrite the whole file. Set `review-after:` to the new date (add the line
   to the frontmatter if missing).
-- HISTORICAL: insert this single line directly after the closing `---` of
-  the frontmatter, followed by a blank line:
+- HISTORICAL: insert exactly two lines directly after the closing `---` of
+  the frontmatter: the banner line
   `> HISTORICAL as of <YYYY-MM-DD> - describes past state; do not act on it.`
-  Remove any `review-after:` line (manifest first). Record both the banner
-  line and the blank line after it under Added in the Step 7 manifest entry.
+  and one blank line. Insert both even if a blank line already follows —
+  never reuse an existing line; the file may end up with two consecutive
+  blank lines, and that is correct. Remove any `review-after:` line
+  (manifest first).
 - STAMP: insert `review-after: <date>` as the last line before the closing
   `---` of the frontmatter. Nothing else changes. If the file already has a
   malformed `review-after:` line in its frontmatter, REPLACE that line (copy
@@ -181,6 +183,10 @@ A "Removed verbatim" block is MANDATORY for every line you change or remove,
 and an "Added" block for every line you insert. Write both BEFORE you touch
 the file. If you cannot copy the original text exactly, do not make the
 change; report why.
+
+An `Added` block lists exactly the lines you actually inserted — copy them
+from the edit you made, never from this template. If you inserted one line,
+record one line.
 
 Then ensure `memory/.claudeignore` exists and contains a line `.trash/`
 (documentation of intent — never claim it is what prevents loading).
