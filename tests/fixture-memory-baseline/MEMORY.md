@@ -6,3 +6,5 @@
 - [Build pipeline status](project_build_pipeline_status.md) — 2 failures open, fixes in flight
 - [Release checklist status](project_release_checklist_status.md) — v2.0 checklist in progress
 - [Login outage status](project_login_outage_status.md) — outage ongoing, 3 services affected
+- [CI flakiness status](project_ci_flakiness_status.md) — two flaky suites, watching runner update
+- [LESSON: release notes style](feedback_release_notes_style.md) — five bullets max; example stamp line inside

@@ -1,6 +1,6 @@
 {
   "name": "memory-tools",
-  "description": "Memory hygiene skills for Claude Code auto-memory. /forget <concern> force-forgets a discarded effort (trash + manifest, never deletes). /checkup [topic] finds status memories past their review-after stamp or unstamped zombies and fixes them with one confirm; a SessionStart hook warns when stamps go overdue.",
+  "description": "Memory hygiene skills for Claude Code auto-memory. /forget <concern> force-forgets a discarded effort (trash + manifest, never deletes). /checkup [topic] finds status memories past their review-after stamp or unstamped status notes and fixes them with one confirm; a SessionStart hook warns when stamps go overdue.",
   "version": "0.2.0",
   "author": { "name": "Hadeel Sharaf" },
   "license": "MIT",
