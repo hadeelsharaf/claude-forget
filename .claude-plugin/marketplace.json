@@ -5,7 +5,7 @@
     {
       "name": "memory-tools",
       "source": "./",
-      "description": "Memory hygiene for Claude Code auto-memory: /forget moves memories about discarded efforts to a reversible trash and re-indexes MEMORY.md."
+      "description": "Memory hygiene for Claude Code auto-memory: /forget moves memories about discarded efforts to a reversible trash, /checkup finds and fixes status memories that went stale, and a SessionStart hook warns when a memory's review-after stamp goes overdue."
     }
   ]
 }

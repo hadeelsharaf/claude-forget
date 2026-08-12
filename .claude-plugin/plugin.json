@@ -1,7 +1,7 @@
 {
   "name": "memory-tools",
-  "description": "Memory hygiene skills for Claude Code auto-memory. /forget <concern> force-forgets a discarded effort: moves matching memory files to memory/.trash/ (reversible, never deletes), writes a manifest, keeps .trash/ in .claudeignore, and re-indexes MEMORY.md.",
-  "version": "0.1.0",
+  "description": "Memory hygiene skills for Claude Code auto-memory. /forget <concern> force-forgets a discarded effort (trash + manifest, never deletes). /checkup [topic] finds status memories past their review-after stamp or unstamped status notes and fixes them with one confirm; a SessionStart hook warns when stamps go overdue.",
+  "version": "0.2.0",
   "author": { "name": "Hadeel Sharaf" },
   "license": "MIT",
   "homepage": "https://github.com/hadeelsharaf/claude-forget"

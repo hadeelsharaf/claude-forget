@@ -118,7 +118,9 @@ Restore recipe: for each entry below, move the `.trashed` file back up one level
 into `memory/`, drop the `.trashed` suffix, then paste every line in that
 entry's "Removed verbatim" and "Original verbatim" blocks back where it came
 from. Those blocks are the only copy of that text. Mark the entry
-`RESTORED <date>` when done.
+`RESTORED <date>` when done. Entries written by /checkup also carry "Added"
+blocks: delete those added lines first, then paste the verbatim blocks back.
+When several entries touch the same file, restore newest-first.
 
 Entry format, one entry per forget run:
 
@@ -143,6 +145,13 @@ Hook lines reworded:
 - MEMORY.md — hook for <file>.md
   Original verbatim:
   > <the exact hook line, character for character, before rewording>
+  Added:
+  > <the reworded hook line exactly as written>
+
+Recording rule: prefix every recorded line with exactly "> ". A blank line is
+recorded as a bare ">". A line that itself starts with ">" is recorded as
+"> >" plus the rest of the line. To restore, strip exactly one leading "> "
+(or the bare ">") from every recorded line.
 
 A "Removed verbatim" block is MANDATORY for every change you make to a file
 that stays in `memory/`, and for every line you take out of `MEMORY.md`, and
