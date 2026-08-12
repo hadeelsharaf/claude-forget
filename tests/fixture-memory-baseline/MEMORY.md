@@ -3,3 +3,6 @@
 - [LESSON: CSV quoting](feedback_csv_quoting_lesson.md) — always quote fields with commas
 - [Dashboard redesign](project_dashboard_redesign.md) — dark theme approved; widget export button deferred
 - [CI dashboard URL](reference_ci_dashboard_url.md) — where the build dashboard lives
+- [Build pipeline status](project_build_pipeline_status.md) — 2 failures open, fixes in flight
+- [Release checklist status](project_release_checklist_status.md) — v2.0 checklist in progress
+- [Login outage status](project_login_outage_status.md) — outage ongoing, 3 services affected
