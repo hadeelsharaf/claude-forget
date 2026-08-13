@@ -5,7 +5,7 @@
     {
       "name": "memory-tools",
       "source": "./",
-      "description": "Memory hygiene for Claude Code auto-memory: /forget moves memories about discarded efforts to a reversible trash, /checkup finds and fixes status memories that went stale, and a SessionStart hook warns when a memory's review-after stamp goes overdue."
+      "description": "Auto-memory lifecycle for Claude Code: /forget trashes memories safely, /checkup reviews stale ones, /fresh works memory-free, /recall loads the minimum back - plus a freshness hook that warns about overdue notes."
     }
   ]
 }

@@ -1,6 +1,6 @@
 # claude-forget
 
-Memory hygiene for Claude Code auto-memory: /checkup finds what went stale, /forget buries what you discard.
+Memory lifecycle for Claude Code auto-memory: /forget buries what you discard, /checkup finds what went stale, /fresh works memory-free, and /recall loads the minimum back.
 
 ## Skills
 
@@ -56,6 +56,34 @@ it stays silent in projects that have no memory folder. If Claude Code ever
 changes its internal project-folder naming, the hook finds nothing and stays
 silent; /checkup itself still works.
 
+### /fresh — work memory-free
+
+`/fresh [task]` puts the current session under memory quarantine: the agent
+commits to acting as if the project had no auto-memory — no citing it, no
+reading or writing memory files, and every subagent dispatched carries the
+same instruction.
+
+Honesty note: this is instruction-level isolation. Memory text already loaded
+into the session's context is not removed; the agent commits to not using it.
+For hard isolation Claude Code offers official off-switches (the
+`autoMemoryEnabled` setting, the `CLAUDE_CODE_DISABLE_AUTO_MEMORY` environment
+variable, and the in-session `/memory` toggle) — manual alternatives, not
+part of this skill.
+
+Two doors back: `/recall <item>` (below) loads one named topic read-only, or
+say "end fresh mode" to lift the quarantine entirely.
+
+### /recall — load the minimum back
+
+`/recall <item>` is the read-only pull: it lists matching memory index
+entries first (with word counts, and a STALE tag when a file is past its
+`review-after` date), then opens exactly ONE topic file you name. It never
+writes, moves, or deletes anything.
+
+Together the four skills cover the memory lifecycle: `/fresh` starts at zero,
+`/recall` pulls the minimum back, `/checkup` reviews what has gone stale, and
+`/forget` retires what is finished.
+
 ## What it does NOT cover
 
 - CLAUDE.md / CLAUDE.local.md instruction files
@@ -95,4 +123,4 @@ For local testing from a clone:
 ## Testing
 
 See `tests/TESTING.md` for the fixture round-trip procedures (forget,
-checkup, and the scripted hook test `tests/run-hook-test.sh`).
+checkup, fresh, recall, and the scripted hook test `tests/run-hook-test.sh`).

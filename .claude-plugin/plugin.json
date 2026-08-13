@@ -1,7 +1,7 @@
 {
   "name": "memory-tools",
-  "description": "Memory hygiene skills for Claude Code auto-memory. /forget <concern> force-forgets a discarded effort (trash + manifest, never deletes). /checkup [topic] finds status memories past their review-after stamp or unstamped status notes and fixes them with one confirm; a SessionStart hook warns when stamps go overdue.",
-  "version": "0.2.0",
+  "description": "Auto-memory lifecycle for Claude Code: /forget trashes memories safely, /checkup reviews stale ones, /fresh works memory-free, /recall loads the minimum back - plus a freshness hook that warns about overdue notes.",
+  "version": "0.3.0",
   "author": { "name": "Hadeel Sharaf" },
   "license": "MIT",
   "homepage": "https://github.com/hadeelsharaf/claude-forget"

@@ -169,8 +169,69 @@ scratch fixture path; it must reach the same Part 3 gate table and, after the
 same approvals, satisfy K-Q and the restore hash-compare. The builder must
 not coach it. Any deviation is a skill-text bug.
 
+## Part 5 — /fresh behavioral (assertions R-U)
+
+Run in a real Claude Code session in this repo (auto-memory present).
+Setup: BEFORE step 1, take the out-of-tree snapshot:
+`find "$HOME/.claude/projects" -type f -path "*/memory/*" -print0 | sort -z | xargs -0 sha256sum`
+
+1. Invoke `/fresh trial task`.
+- **R:** The activation block appears with all three contract bullets plus the
+  honesty-note bullet (memory text still in context), and `Task: trial task`.
+2. Ask a question answerable only from the project's auto-memory (pick a fact
+  that exists in a memory file but not in the repo).
+- **S:** The agent declines to use memory, says it is unavailable while
+  fresh, and points to `/recall <item>` and "end fresh mode".
+3. Ask the agent to dispatch any trivial subagent (e.g. "list repo top-level
+  dirs via a subagent").
+- **T:** The dispatched prompt contains, verbatim:
+  `Disregard any auto-memory context; work only from this prompt.`
+4. Say "end fresh mode".
+- **U:** The agent announces "Memory quarantine OFF - auto-memory is back in
+  use." AND the out-of-tree snapshot taken before step 1 matches the one
+  taken now (no memory file changed):
+  `find "$HOME/.claude/projects" -type f -path "*/memory/*" -print0 | sort -z | xargs -0 sha256sum`
+  (PowerShell 5.1 note: run this in git-bash; the PS one-liner form silently
+  returns zero rows.)
+
+Cold variant: hand a fresh agent only the shipped `skills/fresh/SKILL.md`
+text; it must satisfy R-U without coaching.
+
+## Part 6 — /recall round trip (assertions V-AA, read-only proof)
+
+Setup: copy `tests/fixture-memory-baseline/` to a scratch memory dir; tell
+the agent that path in the conversation (user-typed provenance). Hash all 11
+files before starting (same find|sha256sum form as Part 5).
+
+1. Invoke `/recall build pipeline`.
+- **V:** Stage 1 lists `project_build_pipeline_status` with a word count and
+  the tag `STALE: review-after 2026-07-01 is past`; it lists NO trashed file
+  and no unrelated file (e.g. `feedback_csv_quoting_lesson`).
+2. Name `project_build_pipeline_status` to open.
+- **W:** Output is a `recalled: project_build_pipeline_status, <N> words,
+  last modified <date>` header, the file's full content, and the one-line
+  STALE warning pointing to /checkup.
+3. Invoke `/recall quantum teleportation`.
+- **X:** Response is "nothing in memory matches quantum teleportation" (no
+  file opened).
+4. Invoke `/recall` with no argument.
+- **Y:** The agent asks "What should I recall?" and stops (no listing).
+5. Under /fresh: invoke `/fresh`, then `/recall build pipeline`, open
+  `project_build_pipeline_status`, then ask about a DIFFERENT memory-only
+  fact.
+- **Z:** The recalled file's content is usable, but the other fact is
+  declined (quarantine holds for everything not recalled).
+6. Re-hash all 11 fixture files.
+- **AA:** Every hash is identical to the pre-run hash (nothing written,
+  moved, or stamped).
+
+Cold variant: hand a fresh agent only the shipped `skills/recall/SKILL.md`
+text and the scratch fixture path; it must satisfy V-AA without coaching.
+
 ## Pass criteria
 
 Part 1: A-J plus matching restore hashes. Part 2: ALL PASS. Part 3: K-Q plus
-matching restore hashes. Part 4: same bar as Part 3, on a cold agent. Any
-deviation is a skill/hook bug: fix the shipped text or script, never the test.
+matching restore hashes. Part 4: same bar as Part 3, on a cold agent. Part 5:
+R-U with identical out-of-tree snapshots. Part 6: V-AA with 11/11 identical
+fixture hashes. Any deviation is a skill/hook bug: fix the shipped text or
+script, never the test.
