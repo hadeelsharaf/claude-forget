@@ -1,10 +1,16 @@
 # claude-forget
 
+![Banner: claude-forget — memory lifecycle for Claude Code auto-memory. Nothing is ever deleted, everything can be undone. Four skill chips: /fresh, /recall, /checkup, /forget.](assets/banner.png)
+
 Memory lifecycle for Claude Code auto-memory: /forget buries what you discard, /checkup finds what went stale, /fresh works memory-free, and /recall loads the minimum back.
+
+![Diagram of the memory lifecycle. Four stages in order: /fresh starts at zero with a memory quarantine; /recall pulls the minimum back, read-only, opening exactly one topic file; /checkup reviews past-due review-after stamps and stale status notes; /forget retires finished work by moving files to .trash with a restore manifest. Footer: every step is reversible — no memory file is ever deleted, every cut line is copied verbatim into .trash/TRASH.md before the cut.](assets/lifecycle.png)
 
 ## Skills
 
 ### /forget <concern>
+
+![Diagram: how /forget stays reversible, in five steps. 1: find the memories about the concern via index scan, keyword grep, and semantic judgment. 2: show the list — one confirm. 3: bury, don't delete — whole-match files move to memory/.trash/ and are renamed name.md to name.md.trashed; partial matches lose only the matching lines. 4: record everything in the .trash/TRASH.md manifest with a restore recipe. 5: re-index MEMORY.md and clean dangling links. Footer: restore = move the file back, drop the .trashed suffix, paste the manifest's verbatim block back.](assets/forget-flow.png)
 
 Force-forget a discarded effort, reversibly. It:
 

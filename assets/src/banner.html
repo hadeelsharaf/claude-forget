@@ -1,0 +1,23 @@
+<meta charset="utf-8">
+<style>
+  :root{--ink:#0b0b0b;--ink2:#52514e;--accent:#2a78d6}
+  *{box-sizing:border-box;margin:0;padding:0}
+  html{height:300px;background:linear-gradient(135deg,#fcfcfb 0%,#eef4fc 100%)}
+  body{font-family:system-ui,-apple-system,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;color:var(--ink);width:800px;height:300px;padding:34px 44px}
+  .name{font-size:42px;font-weight:800;letter-spacing:-.02em}
+  .name .slash{color:var(--accent)}
+  .tag{font-size:19px;color:var(--ink2);margin-top:8px;line-height:1.4}
+  .chips{display:flex;gap:12px;margin-top:22px;flex-wrap:wrap}
+  .chip{font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;font-size:17px;font-weight:700;padding:8px 17px;border-radius:999px;border:2px solid var(--accent);color:var(--accent);background:#fff}
+  .chip.solid{background:var(--accent);color:#fff}
+</style>
+<body>
+  <div class="name"><span class="slash">/</span>claude-forget</div>
+  <div class="tag">Memory lifecycle for Claude Code auto-memory — nothing is ever deleted, everything can be undone.</div>
+  <div class="chips">
+    <div class="chip">/fresh</div>
+    <div class="chip">/recall</div>
+    <div class="chip">/checkup</div>
+    <div class="chip solid">/forget</div>
+  </div>
+</body>
