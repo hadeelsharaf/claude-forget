@@ -53,7 +53,8 @@ one.
 
 ### The freshness hook
 
-The plugin ships a SessionStart hook. At the start of each session it checks
+The plugin ships a SessionStart hook. At the start of each session (and
+again after context compaction, so the warning is not lost) it checks
 the current project's memory folder for `review-after` stamps that are past
 due and, only then, prints a short warning. That warning also lands in the
 agent's context, so the agent itself stops trusting the stale note. No stale
@@ -119,10 +120,11 @@ claude plugin update memory-tools@claude-forget
 (restart Claude Code to apply). To remove it:
 `claude plugin uninstall memory-tools@claude-forget`.
 
-For local testing from a clone:
+For local testing from a clone (Windows or POSIX path):
 
 ```
 /plugin marketplace add D:\path\to\claude-forget
+/plugin marketplace add ~/path/to/claude-forget
 /plugin install memory-tools@claude-forget
 ```
 
@@ -130,3 +132,12 @@ For local testing from a clone:
 
 See `tests/TESTING.md` for the fixture round-trip procedures (forget,
 checkup, fresh, recall, and the scripted hook test `tests/run-hook-test.sh`).
+
+Two scripted checks run in CI on every push (Linux, macOS, Windows):
+
+```
+sh tests/run-hook-test.sh       # freshness hook behavior
+sh tests/check-consistency.sh   # shared skill text and manifests agree (needs jq)
+```
+
+Release notes live in `CHANGELOG.md`.

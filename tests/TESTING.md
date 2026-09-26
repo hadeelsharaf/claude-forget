@@ -78,13 +78,25 @@ Run from the repo root (git-bash on Windows):
     sh tests/run-hook-test.sh
 
 Expected: every line `PASS`, final line `ALL PASS`, exit 0. Covers: exact
-warning shape for an overdue stamp, POSIX-path slug mapping, silence when
+warning shape for an overdue stamp, git-bash `/d/...` slug mapping on
+Windows shells only (a real `/d/...` on Linux/macOS is left alone), plain
+unix-path slugs, silence when
 nothing is stale, silence when no memory dir exists, that `.trash/` is never
 scanned, multiple overdue files reported in alphabetical order, a malformed
 stamp staying silent, a body-text `review-after:` outside the frontmatter
 staying silent, a stamp dated exactly today staying silent, a lowercase drive
 letter producing the same warning as uppercase, and `HOME` unset staying
 silent with exit 0.
+
+## Part 2b — consistency check (scripted)
+
+    sh tests/check-consistency.sh
+
+Expected: `ALL PASS`, exit 0. Checks that the TRASH.md header, recording
+rule, and Locate step are word-for-word identical in /forget and /checkup,
+that the plugin manifests parse and agree, that every skill's `name:`
+matches its folder, and that `CHANGELOG.md` has an entry for the current
+version. Needs `jq`.
 
 ## Part 3 — /checkup round trip
 
@@ -230,7 +242,7 @@ text and the scratch fixture path; it must satisfy V-AA without coaching.
 
 ## Pass criteria
 
-Part 1: A-J plus matching restore hashes. Part 2: ALL PASS. Part 3: K-Q plus
+Part 1: A-J plus matching restore hashes. Part 2 and 2b: ALL PASS. Part 3: K-Q plus
 matching restore hashes. Part 4: same bar as Part 3, on a cold agent. Part 5:
 R-U with identical out-of-tree snapshots. Part 6: V-AA with 11/11 identical
 fixture hashes. Any deviation is a skill/hook bug: fix the shipped text or
