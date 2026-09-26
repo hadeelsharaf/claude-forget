@@ -31,10 +31,23 @@ out=$(HOME="$scratch" CLAUDE_PROJECT_DIR="$proj" sh "$root/hooks/check-stale"); 
 check "overdue warning shape" "$expected" "$out"
 check "exit 0 (overdue)" "0" "$rc"
 
-# Case 2: POSIX-style project dir maps to the same slug (same warning).
-out=$(HOME="$scratch" CLAUDE_PROJECT_DIR='/d/fake/checkup-proj' sh "$root/hooks/check-stale"); rc=$?
-check "posix path maps to same slug" "$expected" "$out"
-check "exit 0 (posix path)" "0" "$rc"
+# Case 2: on a Windows shell, a git-bash /d/... dir maps to the same slug.
+out=$(HOME="$scratch" MEMORY_TOOLS_OS=MINGW64_NT CLAUDE_PROJECT_DIR='/d/fake/checkup-proj' sh "$root/hooks/check-stale"); rc=$?
+check "git-bash path maps to same slug" "$expected" "$out"
+check "exit 0 (git-bash path)" "0" "$rc"
+
+# Case 2b: on Linux/macOS, a real /d/... dir is NOT rewritten to D: (silent).
+out=$(HOME="$scratch" MEMORY_TOOLS_OS=Linux CLAUDE_PROJECT_DIR='/d/fake/checkup-proj' sh "$root/hooks/check-stale"); rc=$?
+check "unix /d/ path not treated as drive" "" "$out"
+check "exit 0 (unix /d/ path)" "0" "$rc"
+
+# Case 2c: a plain unix project dir slugs with a leading dash.
+umem="$scratch/.claude/projects/-home-dev-proj/memory"
+mkdir -p "$umem"
+cp "$root/tests/fixture-memory-baseline/project_build_pipeline_status.md" "$umem/"
+out=$(HOME="$scratch" MEMORY_TOOLS_OS=Linux CLAUDE_PROJECT_DIR='/home/dev/proj' sh "$root/hooks/check-stale"); rc=$?
+check "unix path slug" "$expected" "$out"
+check "exit 0 (unix path)" "0" "$rc"
 
 # Case 3: nothing overdue -> completely silent.
 rm "$mem/project_build_pipeline_status.md"
@@ -97,7 +110,7 @@ check "lowercase drive same warning" "$expected" "$out"
 check "exit 0 (lowercase drive)" "0" "$rc"
 
 # Case 10: HOME unset -> silent, exit 0.
-out=$(HOME= CLAUDE_PROJECT_DIR="$proj" sh "$root/hooks/check-stale"); rc=$?
+out=$(HOME="" CLAUDE_PROJECT_DIR="$proj" sh "$root/hooks/check-stale"); rc=$?
 check "HOME unset silent" "" "$out"
 check "exit 0 (HOME unset)" "0" "$rc"
 
