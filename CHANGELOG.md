@@ -11,8 +11,6 @@
 - New `tests/check-consistency.sh`: checks that the TRASH.md header,
   recording rule, and Locate step stay identical in /forget and /checkup,
   and that the plugin manifests agree.
-- CI: GitHub Actions runs the hook test on Linux, macOS, and Windows, plus
-  the consistency check and shellcheck.
 
 ## 0.3.0 (2026-08-13)
 

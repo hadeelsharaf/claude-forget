@@ -133,7 +133,7 @@ For local testing from a clone (Windows or POSIX path):
 See `tests/TESTING.md` for the fixture round-trip procedures (forget,
 checkup, fresh, recall, and the scripted hook test `tests/run-hook-test.sh`).
 
-Two scripted checks run in CI on every push (Linux, macOS, Windows):
+Two scripted checks you can run from the repo root:
 
 ```
 sh tests/run-hook-test.sh       # freshness hook behavior
