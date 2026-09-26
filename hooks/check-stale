@@ -5,11 +5,13 @@
 dir="${CLAUDE_PROJECT_DIR:-$PWD}"
 # Normalize a git-bash /x/... path to the X:/... form Claude Code slugs.
 # Windows shells only: on Linux/macOS a real /x/... directory is left as is.
-case "${MEMORY_TOOLS_OS:-$(uname -s 2>/dev/null)}" in
-  MINGW*|MSYS*|CYGWIN*)
-    case "$dir" in
-      /[A-Za-z]/*) dl=$(printf '%s' "$dir" | cut -c2 | tr '[:lower:]' '[:upper:]')
-                   dir="$dl:${dir#/?}" ;;
+# (uname is only consulted when the path actually looks like /x/...)
+case "$dir" in
+  /[A-Za-z]/*)
+    case "${MEMORY_TOOLS_OS:-$(uname -s 2>/dev/null)}" in
+      MINGW*|MSYS*|CYGWIN*)
+        dl=$(printf '%s' "$dir" | cut -c2 | tr '[:lower:]' '[:upper:]')
+        dir="$dl:${dir#/?}" ;;
     esac ;;
 esac
 case "$dir" in
