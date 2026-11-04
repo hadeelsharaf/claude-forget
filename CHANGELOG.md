@@ -16,6 +16,12 @@ Fix release: keeps the freshness hook working with current Claude Code.
 - Hook: `CLAUDE_CONFIG_DIR` is respected instead of a hard-coded `~/.claude`.
 - Hook: also runs after `compact` and on `fork`, so the stale warning
   re-enters context when memory is re-read after compaction.
+- Hook: fixed "status 126" on Linux and macOS. The hook scripts were
+  committed without the executable bit, so bash could not run the wrapper
+  and the hook never fired on those platforms. The scripts are now
+  executable in git, and the hook command runs the wrapper through `bash`
+  explicitly so it no longer depends on the bit. Verified end to end: a
+  session launched from a subfolder of a repo received the warning.
 - Tests: eight new hook cases cover every lookup path.
 - Packaging: plugin icon, keywords, repository and JSON schema; marketplace
   description, category and tags. `claude plugin validate --strict` is clean.

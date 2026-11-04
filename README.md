@@ -155,4 +155,6 @@ checkup, fresh, recall, and the scripted hook test `tests/run-hook-test.sh`).
 GitHub Actions runs the hook test and `claude plugin validate . --strict` on
 every push. Plugin evals (`claude plugin eval`) are run locally only.
 
-See `CHANGELOG.md` for what changed in each version.
+See `CHANGELOG.md` for what changed in each version, and `ROADMAP.md` for
+what is planned next (v0.4.0: /restore, index health in /checkup, subagent
+memory folders).
