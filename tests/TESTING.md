@@ -1,6 +1,7 @@
 # Fixture round-trip tests for memory-tools
 
 Run the relevant part after every edit to `skills/*/SKILL.md` or `hooks/`.
+Parts 1 and 3 each end in a manifest; Part 4 restores it with /restore.
 
 ## Part 1 — /forget round trip
 
@@ -47,8 +48,14 @@ C. `project_dashboard_redesign.md` survives; its widget-export line is gone;
    its other three facts are untouched.
 D. `feedback_csv_quoting_lesson.md` survives; `[[project_widget_exporter_plan]]`
    no longer appears in it.
-E. `.trash/TRASH.md` exists, has the restore header, and one dated entry that
-   lists both moved files and the edit.
+E. `.trash/TRASH.md` exists, has the restore header with `Manifest format: 2`
+   on its second line, and one dated entry that lists both moved files and
+   the edit.
+E2. Every `Removed verbatim`, `Original verbatim` and `Added` label in the
+   entry carries `(at line N)`. Check two by hand against the baseline: the
+   dashboard line's N equals its line number in the baseline file, and each
+   `MEMORY.md line removed` N equals that line's number in the baseline
+   `MEMORY.md`.
 F. `.claudeignore` exists in `memory/` and contains `.trash/`.
 G. `MEMORY.md` has exactly 8 lines (10 baseline - 2 widget; dashboard hook may
    be reworded); no line points to a missing file.
@@ -166,6 +173,60 @@ P. The ci_flakiness file has exactly ONE `review-after:` line (the new
 Q. Manifest recording obeys the recording rule: the HISTORICAL banner
    appears as `> > HISTORICAL ...` and its blank line as a bare `>` under
    `Added`.
+R. Anchors: the login file's `Added (at line N)` N is the line directly after
+   the closing `---` in the final file; its `Removed verbatim (at line N)` for
+   the old `review-after` line (if any) uses the baseline line number; the
+   build file's Removed and Added blocks share the same N (a replacement).
+
+## Scripted way to run the skill round trips
+
+The gate needs a reply, so use one session id across two `claude -p` calls
+(a narrow allowlist keeps the run inside the scratch tree):
+
+    SID=$(python3 -c "import uuid;print(uuid.uuid4())")
+    TOOLS="Read,Write,Edit,Glob,Grep,Skill,Bash(mv:*),Bash(mkdir:*),Bash(grep:*),Bash(date:*),Bash(ls:*),Bash(nl:*),Bash(wc:*),Bash(head:*),Bash(cat:*),Bash(sed -n:*)"
+    claude -p --session-id "$SID" --permission-mode acceptEdits --allowedTools "$TOOLS" \
+      "/memory-tools:forget the widget exporter effort
+
+    Testing note from the user: use $PWD/tests/scratch/memory as the memory directory for this run (user-supplied path). Stop at the confirm gate and wait for my answer."
+    claude -p --resume "$SID" --permission-mode acceptEdits --allowedTools "$TOOLS" "<your gate answer>"
+
+Then the same two calls with `/memory-tools:restore` and `yes`, and compare
+hashes against the baseline. Parts 1+4 and 3+4 were run this way on
+2026-11-04: 11/11 files matched after each restore.
+
+## Part 4 — /restore round trip
+
+Run after Part 1 or Part 3, on the same scratch tree, without restoring by
+hand first.
+
+1. Follow skills/restore/SKILL.md literally against `tests/scratch/memory/`
+   (Step 2 user-supplied-path override) with no hint. Expect exactly one
+   OPEN entry in the list, not BLOCKED, with zero "needs placement" blocks.
+2. Pick it. The dry run must list, for Part 1: two files to move back, one
+   paste in `project_dashboard_redesign.md`, one Added deletion plus one
+   paste in `feedback_csv_quoting_lesson.md` (the link line replacement), two
+   index lines to re-add, and the hook rewording if one was made. For Part 3:
+   Added deletions and pastes for the three checkup files and the hook line.
+3. Approve everything.
+
+### Assertions after the run
+
+S. Every file in `tests/scratch/memory/` except `.trash/` and
+   `.claudeignore` is byte-identical to `tests/fixture-memory-baseline/`
+   (11/11 hashes match). This is the proof that the anchors are right.
+T. `.trash/` holds only `TRASH.md`; no `.trashed` file remains.
+U. The manifest entry is intact and its heading is followed by a line
+   `RESTORED <today>`; nothing else in `TRASH.md` changed.
+V. Running /restore again reports "nothing to restore".
+W. I11 out-of-tree guard and `git status --porcelain` as in Part 1.
+
+### Format-1 manifest (manual placement)
+
+Edit a copy of a Part 1 manifest to strip every `(at line N)`. Run
+/restore: every block must appear under "needs placement", the skill must
+ask for a line or "append" for each before the gate, and after approval
+with the correct lines the hashes must again match 11/11.
 
 ### Restore pass
 

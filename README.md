@@ -25,8 +25,10 @@ Force-forget a discarded effort, reversibly. It:
 5. Re-indexes `MEMORY.md` and cleans dangling `[[links]]`.
 
 No memory file is ever deleted. Any text cut from a file that stays behind is
-copied verbatim into `.trash/TRASH.md` before the cut. Restore = move the file
-back, drop the `.trashed` suffix, and paste the manifest's verbatim block back.
+copied verbatim into `.trash/TRASH.md` before the cut, with a line anchor
+(`at line N`) that says where it came from. Restore = `/restore` (below), or
+by hand: move the file back, drop the `.trashed` suffix, and paste the
+manifest's verbatim block back at its anchor.
 
 Note on the mechanism: only `MEMORY.md` auto-loads each session, and topic
 files are read on demand. The `.md.trashed` rename is what guarantees trashed
@@ -50,6 +52,21 @@ Find status memories that went stale, and fix them with one confirm. It:
 The stamp convention: a perishable memory carries a top-level frontmatter
 line `review-after: YYYY-MM-DD`. Facts, lessons, and references never need
 one.
+
+### /restore [entry]
+
+Undo one /forget or /checkup run from the manifest alone. It:
+
+1. Reads `.trash/TRASH.md` and lists the open entries, newest first. An
+   entry is blocked while a newer entry touches the same file.
+2. Shows a dry run for the entry you pick: added lines to delete, verbatim
+   blocks to paste at their anchors, files to move back, index lines to
+   re-add. One confirm.
+3. Applies it, then writes `RESTORED <date>` under the entry heading. The
+   entry itself is never removed, so the manifest stays a full history.
+
+Manifests written before anchors existed (format 1) still work: the skill
+asks you where each block goes before the gate.
 
 ### The freshness hook
 
@@ -105,9 +122,10 @@ entries first (with word counts, and a STALE tag when a file is past its
 `review-after` date), then opens exactly ONE topic file you name. It never
 writes, moves, or deletes anything.
 
-Together the four skills cover the memory lifecycle: `/fresh` starts at zero,
-`/recall` pulls the minimum back, `/checkup` reviews what has gone stale, and
-`/forget` retires what is finished.
+Together the skills cover the memory lifecycle: `/fresh` starts at zero,
+`/recall` pulls the minimum back, `/checkup` reviews what has gone stale,
+`/forget` retires what is finished, and `/restore` undoes either of the last
+two.
 
 ## What it does NOT cover
 

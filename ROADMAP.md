@@ -16,7 +16,7 @@ Decisions already taken:
   gate says "inside the repository: changes will show in git status".
 - Plugin evals (`claude plugin eval`) stay local. No eval job in CI.
 
-### Phase 1 - manifest v2 and /restore
+### Phase 1 - manifest v2 and /restore (in progress on the dev branch)
 
 Why first: the other two phases add edits, and edits are only safe when the
 undo path is real. Today the restore recipe is manual.
@@ -24,10 +24,10 @@ undo path is real. Today the restore recipe is manual.
 Manifest v2 (`.trash/TRASH.md`), backwards compatible:
 
 - Header line gains `Manifest format: 2`. v1 files are read as before.
-- Every "Removed verbatim" and "Original verbatim" block gains an anchor
-  line directly above it: `at line N` (1-based line in the file as it was
-  before that entry's change). "Added" blocks carry `at line N` too (the
-  line where the first added line now sits).
+- Every "Removed verbatim" and "Original verbatim" label carries an anchor,
+  `(at line N)`: the 1-based line in the file as it was before that entry's
+  change. "Added" labels carry `(at line N)` too (the line where the first
+  added line now sits). One block per contiguous run of lines.
 - Nothing else changes. /forget and /checkup write the anchors; the recipe
   text in the header explains them.
 

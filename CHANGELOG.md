@@ -3,6 +3,18 @@
 All notable changes to the memory-tools plugin. Users only receive an update
 when the `version` in `.claude-plugin/plugin.json` changes.
 
+## Unreleased (0.4.0)
+
+- /restore: new skill that undoes one /forget or /checkup entry from the
+  manifest: lists open entries, dry run, one confirm, marks the entry
+  `RESTORED <date>`. Never deletes an entry or a file.
+- Manifest format 2: `Manifest format: 2` header line and `(at line N)`
+  anchors on every Removed, Original and Added block, written by /forget and
+  /checkup. Format-1 manifests still restore, with manual placement.
+- Tests: Part 4 restore round trip and anchor assertions in `TESTING.md`.
+  Both forget+restore and checkup+restore round trips were run against the
+  fixture: every file matched the baseline byte for byte afterwards.
+
 ## 0.3.1 - 2026-11-04
 
 Fix release: keeps the freshness hook working with current Claude Code.

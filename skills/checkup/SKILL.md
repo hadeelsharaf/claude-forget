@@ -98,7 +98,8 @@ decline, stop and report that nothing was touched. Never open a second gate.
 
 ## Step 6 — Execute (only after confirmation)
 
-Work file by file. Write the Step 7 manifest blocks BEFORE each change.
+Work file by file. Write the Step 7 manifest blocks BEFORE each change,
+reading line numbers (`grep -n`) from the untouched file for the anchors.
 
 - REFRESH: replace only the stale lines with the user's stated truth. Insert
   the user's stated truth verbatim — their exact words, not a paraphrase; you
@@ -129,14 +130,20 @@ Create the `memory/.trash/` folder if missing. Append one entry to
 exactly this header (unindented):
 
 # Trash manifest
+Manifest format: 2
 
-Restore recipe: for each entry below, move the `.trashed` file back up one level
-into `memory/`, drop the `.trashed` suffix, then paste every line in that
-entry's "Removed verbatim" and "Original verbatim" blocks back where it came
-from. Those blocks are the only copy of that text. Mark the entry
-`RESTORED <date>` when done. Entries written by /checkup also carry "Added"
-blocks: delete those added lines first, then paste the verbatim blocks back.
-When several entries touch the same file, restore newest-first.
+Restore recipe: run /restore and pick an entry. By hand: for each entry below,
+move the `.trashed` file back up one level into `memory/`, drop the `.trashed`
+suffix, delete every line under "Added", then paste every line in that entry's
+"Removed verbatim" and "Original verbatim" blocks back where it came from.
+Those blocks are the only copy of that text. Anchors: "(at line N)" on a
+Removed or Original block is the line the first pasted line must land on,
+counted in the file as it was BEFORE the entry; on an Added block it is the
+line the first added line sits on AFTER the entry. Delete Added lines first
+(highest N first), then paste blocks in ascending N. Blocks without an anchor
+were written by format 1 and are placed by hand. When several entries touch
+the same file, restore newest-first. When done, add a line `RESTORED <date>`
+directly under the entry heading.
 
 Entry format, one entry per checkup run:
 
@@ -147,41 +154,53 @@ Restore: delete every line under "Added", paste every "Removed verbatim" and
 
 Refreshed:
 - <file>.md - replaced <N> line(s)
-  Removed verbatim:
-  > <each replaced or removed line, copied exactly, one per "> " prefix>
-  Added:
+  Removed verbatim (at line <N>):
+  > <each replaced or removed line of one contiguous run, copied exactly, one per "> " prefix>
+  Added (at line <N>):
   > <each new line you wrote, copied exactly>
 
 Marked historical:
 - <file>.md
-  Added:
+  Added (at line <N>):
   > <the banner line exactly as inserted>
   >
-  Removed verbatim:
+  Removed verbatim (at line <N>):
   > <the review-after line, if one was removed>
 
 Stamped:
 - <file>.md
-  Added:
+  Added (at line <N>):
   > <the review-after line exactly as inserted>
-  Removed verbatim:
+  Removed verbatim (at line <N>):
   > <the malformed review-after line, if one was replaced>
 
 Hook lines reworded:
 - MEMORY.md — hook for <file>.md
-  Original verbatim:
+  Original verbatim (at line <N>):
   > <the exact hook line, character for character, before rewording>
-  Added:
+  Added (at line <N>):
   > <the reworded hook line exactly as written>
+
+Anchor rule: every "Removed verbatim", "Original verbatim" and "Added" label
+carries "(at line N)". For Removed and Original blocks, N is the 1-based line
+of the block's first line in the file BEFORE any change of this entry; read
+those numbers (for example `grep -n` or `nl`) before you touch the file. For
+Added blocks, N is the line the first added line sits on AFTER all of this
+entry's changes to that file; read it once the file is final. One block per
+contiguous run of lines: lines that are not next to each other get separate
+blocks, listed in ascending N. A block with both Removed and Added at the
+same N is a replacement. If the manifest already exists without the
+`Manifest format: 2` line, insert that line directly under `# Trash manifest`.
 
 Recording rule: prefix every recorded line with exactly "> ". A blank line is
 recorded as a bare ">". A line that itself starts with ">" is recorded as
 "> >" plus the rest of the line. To restore, strip exactly one leading "> "
 (or the bare ">") from every recorded line.
 
-A "Removed verbatim" block is MANDATORY for every line you change or remove,
-and an "Added" block for every line you insert. Write both BEFORE you touch
-the file. If you cannot copy the original text exactly, do not make the
+A "Removed verbatim" block, with its anchor, is MANDATORY for every line you
+change or remove, and an "Added" block, with its anchor, for every line you
+insert. Write the Removed block BEFORE you touch the file; fill the Added
+anchor right after the edit, from the final file. If you cannot copy the original text exactly, do not make the
 change; report why.
 
 An `Added` block lists exactly the lines you actually inserted — copy them
@@ -239,7 +258,7 @@ Forget handoffs (run these yourself):
 Index:
 - hook lines updated: <N>
 
-Manifest: <path to TRASH.md>
+Manifest: <path to TRASH.md> (undo with /restore)
 Next checkup due: <earliest future review-after, or "no stamps set">
 
 NOT covered by this run: CLAUDE.md files, MCP memory stores (for example
