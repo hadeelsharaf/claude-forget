@@ -15,3 +15,9 @@ render() {
 render banner 300
 render lifecycle 940
 render forget-flow 960
+
+# Plugin icon: square 1024px PNG (the marketplace accepts 512-2048px PNG/JPEG).
+"$CHROME" --headless=new --no-sandbox --disable-gpu --hide-scrollbars \
+  --window-size="1024,$((1024 + 85))" --screenshot="icon.raw.png" "src/icon.html"
+python3 -c "from PIL import Image; Image.open('icon.raw.png').crop((0,0,1024,1024)).save('icon.png')"
+rm icon.raw.png

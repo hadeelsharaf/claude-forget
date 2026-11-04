@@ -53,14 +53,33 @@ one.
 
 ### The freshness hook
 
-The plugin ships a SessionStart hook. At the start of each session it checks
-the current project's memory folder for `review-after` stamps that are past
-due and, only then, prints a short warning. That warning also lands in the
-agent's context, so the agent itself stops trusting the stale note. No stale
-stamps means no output at all. The hook never edits or blocks anything, and
-it stays silent in projects that have no memory folder. If Claude Code ever
-changes its internal project-folder naming, the hook finds nothing and stays
-silent; /checkup itself still works.
+The plugin ships a SessionStart hook. At the start of each session (and again
+after a `/compact` or a fork) it checks the current project's memory folder
+for `review-after` stamps that are past due and, only then, prints a short
+warning. That warning also lands in the agent's context, so the agent itself
+stops trusting the stale note. No stale stamps means no output at all. The
+hook never edits or blocks anything, and it stays silent in projects that
+have no memory folder.
+
+How the hook finds the memory folder (first hit wins), matching how Claude
+Code itself resolves it:
+
+1. `autoMemoryDirectory` from settings: managed settings, then
+   `.claude/settings.local.json`, `.claude/settings.json`, then the user
+   `settings.json` in the config dir.
+2. `<config dir>/projects/<CLAUDE_CODE_PROJECT_DIR_NAME>/memory`, when that
+   variable is set beside `CLAUDE_CONFIG_DIR`.
+3. `<config dir>/projects/<slug of the git repository root>/memory`. All
+   worktrees and subfolders of one repo share one memory folder.
+4. `<config dir>/projects/<slug of the launch folder>/memory` (older layout).
+
+`<config dir>` is `CLAUDE_CONFIG_DIR`, else `~/.claude`. If Claude Code ever
+changes its folder naming again, the hook finds nothing and stays silent;
+/checkup itself still works.
+
+A note on the index: Claude Code loads only the first 200 lines or 25 KB of
+`MEMORY.md` at session start. Entries past that point never load. Keep the
+index to one line per memory; a size check in /checkup is planned.
 
 ### /fresh — work memory-free
 
@@ -93,6 +112,9 @@ Together the four skills cover the memory lifecycle: `/fresh` starts at zero,
 ## What it does NOT cover
 
 - CLAUDE.md / CLAUDE.local.md instruction files
+- Subagent memory folders (`.claude/agent-memory/<name>/`,
+  `.claude/agent-memory-local/<name>/`, `~/.claude/agent-memory/<name>/`) -
+  planned for a later release
 - MCP memory stores (for example `.swarm/memory.db`)
 - Session transcripts
 - claude.ai web memory
@@ -130,3 +152,7 @@ For local testing from a clone:
 
 See `tests/TESTING.md` for the fixture round-trip procedures (forget,
 checkup, fresh, recall, and the scripted hook test `tests/run-hook-test.sh`).
+GitHub Actions runs the hook test and `claude plugin validate . --strict` on
+every push. Plugin evals (`claude plugin eval`) are run locally only.
+
+See `CHANGELOG.md` for what changed in each version.

@@ -86,6 +86,19 @@ staying silent, a stamp dated exactly today staying silent, a lowercase drive
 letter producing the same warning as uppercase, and `HOME` unset staying
 silent with exit 0.
 
+Memory-folder lookup cases (added in 0.3.1; they need `git` on PATH): the
+git repository root's slug is used when launched from a subfolder, the legacy
+launch-folder slug still works as a fallback, `autoMemoryDirectory` from user
+settings (`~/` form) wins over the project folder, a project
+`.claude/settings.local.json` beats user settings, a setting that points at a
+missing folder is ignored, `CLAUDE_CONFIG_DIR` replaces `~/.claude`,
+`CLAUDE_CODE_PROJECT_DIR_NAME` beside `CLAUDE_CONFIG_DIR` names the folder,
+and that same variable without `CLAUDE_CONFIG_DIR` is ignored.
+
+The same script runs in GitHub Actions on Linux and macOS (`.github/workflows/ci.yml`),
+with an informational Windows git-bash job, alongside
+`claude plugin validate . --strict`.
+
 ## Part 3 — /checkup round trip
 
 ### Setup

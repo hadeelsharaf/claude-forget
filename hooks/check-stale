@@ -1,20 +1,90 @@
 #!/bin/sh
 # SessionStart hook: warn when the current project's auto-memories are past
 # their review-after date. Read-only; always exits 0; silent when clean.
+#
+# Where the memory folder is looked for, in order (first hit wins):
+#   1. `autoMemoryDirectory` from settings files, in Claude Code's precedence:
+#      managed (policy) > .claude/settings.local.json > .claude/settings.json
+#      > <config dir>/settings.json
+#   2. <config dir>/projects/<CLAUDE_CODE_PROJECT_DIR_NAME>/memory, when that
+#      variable is set beside CLAUDE_CONFIG_DIR
+#   3. <config dir>/projects/<slug of the git repository root>/memory
+#   4. <config dir>/projects/<slug of CLAUDE_PROJECT_DIR>/memory (legacy)
+# <config dir> is CLAUDE_CONFIG_DIR, else $HOME/.claude. The slug replaces
+# every non-alphanumeric character with "-".
 
-dir="${CLAUDE_PROJECT_DIR:-$PWD}"
-# Normalize a git-bash /x/... path to the X:/... form Claude Code slugs.
-case "$dir" in
-  /[A-Za-z]/*) dl=$(printf '%s' "$dir" | cut -c2 | tr 'a-z' 'A-Z')
-               dir="$dl:${dir#/?}" ;;
-esac
-case "$dir" in
-  [a-z]:*) dl=$(printf '%s' "$dir" | cut -c1 | tr 'a-z' 'A-Z')
-           dir="$dl${dir#?}" ;;
-esac
-slug=$(printf '%s' "$dir" | sed 's/[^A-Za-z0-9]/-/g')
-mem="$HOME/.claude/projects/$slug/memory"
-[ -d "$mem" ] || exit 0
+# --- helpers ---------------------------------------------------------------
+
+# Normalize a git-bash /x/... path or a lowercase drive letter to X:/... form.
+normalize_path() {
+  p="$1"
+  case "$p" in
+    /[A-Za-z]/*) dl=$(printf '%s' "$p" | cut -c2 | tr 'a-z' 'A-Z')
+                 p="$dl:${p#/?}" ;;
+  esac
+  case "$p" in
+    [a-z]:*) dl=$(printf '%s' "$p" | cut -c1 | tr 'a-z' 'A-Z')
+             p="$dl${p#?}" ;;
+  esac
+  printf '%s' "$p"
+}
+
+slugify() { printf '%s' "$1" | sed 's/[^A-Za-z0-9]/-/g'; }
+
+# Print the autoMemoryDirectory value from a settings file, or nothing.
+# Tolerant single-line match; "~/" is expanded, "\\" is unescaped.
+setting_dir() {
+  [ -f "$1" ] || return 0
+  v=$(sed -n 's/.*"autoMemoryDirectory"[[:space:]]*:[[:space:]]*"\([^"]*\)".*/\1/p' "$1" 2>/dev/null | head -n 1)
+  [ -n "$v" ] || return 0
+  v=$(printf '%s' "$v" | sed 's/\\\\/\\/g')
+  case "$v" in
+    "~/"*) [ -n "$HOME" ] || return 0; v="$HOME/${v#\~/}" ;;
+  esac
+  printf '%s' "$v"
+}
+
+# --- resolve the memory directory -----------------------------------------
+
+proj="${CLAUDE_PROJECT_DIR:-$PWD}"
+cfg="${CLAUDE_CONFIG_DIR:-${HOME:+$HOME/.claude}}"
+mem=""
+
+# 1. autoMemoryDirectory, highest-precedence scope first.
+for f in \
+  "/etc/claude-code/managed-settings.json" \
+  "/Library/Application Support/ClaudeCode/managed-settings.json" \
+  "${PROGRAMDATA:-C:/ProgramData}/ClaudeCode/managed-settings.json" \
+  "$proj/.claude/settings.local.json" \
+  "$proj/.claude/settings.json" \
+  "${cfg:+$cfg/settings.json}"
+do
+  [ -n "$f" ] || continue
+  d=$(setting_dir "$f")
+  if [ -n "$d" ] && [ -d "$d" ]; then mem="$d"; break; fi
+done
+
+# 2-4. Project folders under <config dir>/projects.
+if [ -z "$mem" ] && [ -n "$cfg" ]; then
+  if [ -n "$CLAUDE_CONFIG_DIR" ] && [ -n "$CLAUDE_CODE_PROJECT_DIR_NAME" ]; then
+    d="$cfg/projects/$CLAUDE_CODE_PROJECT_DIR_NAME/memory"
+    [ -d "$d" ] && mem="$d"
+  fi
+  if [ -z "$mem" ]; then
+    base=$(git -C "$proj" rev-parse --show-toplevel 2>/dev/null) || base=""
+    [ -n "$base" ] && base=$(normalize_path "$base")
+    launch=$(normalize_path "$proj")
+    for cand in "$base" "$launch"; do
+      [ -n "$cand" ] || continue
+      d="$cfg/projects/$(slugify "$cand")/memory"
+      if [ -d "$d" ]; then mem="$d"; break; fi
+    done
+  fi
+fi
+
+[ -n "$mem" ] && [ -d "$mem" ] || exit 0
+
+# --- scan ------------------------------------------------------------------
 
 today=$(date +%Y-%m-%d) || exit 0
 found=$(awk -v today="$today" '
