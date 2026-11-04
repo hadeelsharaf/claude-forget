@@ -192,8 +192,43 @@ The gate needs a reply, so use one session id across two `claude -p` calls
     claude -p --resume "$SID" --permission-mode acceptEdits --allowedTools "$TOOLS" "<your gate answer>"
 
 Then the same two calls with `/memory-tools:restore` and `yes`, and compare
-hashes against the baseline. Parts 1+4 and 3+4 were run this way on
-2026-11-04: 11/11 files matched after each restore.
+hashes against the baseline. Parts 1+4, 3+4 and 3b+4 were run this way on
+2026-11-04: every file matched its baseline after each restore.
+
+## Part 3b — /checkup index health
+
+### Setup
+
+1. `sh tests/make-index-fixture.sh` builds `tests/scratch/memory-index-full/`:
+   210 index lines (lines 201-210 never load), lines 207-210 dangling, two
+   orphan files, every topic file a non-perishable reference.
+
+### Checkup pass
+
+2. Follow skills/checkup/SKILL.md against `tests/scratch/memory-index-full/`
+   (Step 2 user-supplied-path override), no topic.
+
+Expected at the gate:
+- Header: `Index: MEMORY.md 210 lines, <about 10> KB of 200 lines / 25 KB`,
+  an `OVER LIMIT: lines 201 to 210 never load` line, `Orphan files: 2 —
+  orphan_a.md, orphan_b.md`, `Dangling index lines: 4`.
+- Candidate table: empty (no stamps, nothing perishable).
+- Index lines section: four TRIM rows for lines 207, 208, 209, 210, each
+  `DANGLING — points to topic_2xx.md (missing)`.
+
+Approve TRIM for all four.
+
+### Assertions after the run
+
+X. `MEMORY.md` has 206 lines; lines 1-206 are byte-identical to the fixture's
+   first 206 lines; no topic file changed.
+Y. `.trash/TRASH.md` has one checkup entry with an `Index lines trimmed`
+   section holding four `Removed verbatim (at line N)` blocks, N = 207..210,
+   each line copied exactly.
+Z. The report's Index block says `OVER LIMIT` is gone (206 lines, OK or NEAR
+   LIMIT), `index lines trimmed: 4`, `orphan files: 2`, `dangling lines left: 0`.
+AA. Running /restore on this entry puts the four lines back at 207-210 and
+   `MEMORY.md` matches the fixture byte for byte.
 
 ## Part 4 — /restore round trip
 

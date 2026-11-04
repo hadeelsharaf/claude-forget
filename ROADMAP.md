@@ -58,7 +58,7 @@ Tests: extend `tests/TESTING.md` with Part 4: run /forget on the fixture,
 then /restore, then compare hashes to the baseline (11/11 must match). Same
 for /checkup then /restore. Local eval case `evals/restore-round-trip`.
 
-### Phase 2 - /checkup index health
+### Phase 2 - /checkup index health (in progress on the dev branch)
 
 - New header block at the gate, before the candidate table:
   `MEMORY.md: N lines, M KB (limit 200 lines / 25 KB)`, plus `orphan files:
@@ -74,9 +74,9 @@ for /checkup then /restore. Local eval case `evals/restore-round-trip`.
 - Hook stays as is: it reports stamps, not size. Size belongs to the skill
   where the user can act.
 
-Tests: fixture `tests/fixture-memory-index-full/` with 210 index lines and
-two orphans; expected header numbers and TRIM rows documented in
-`TESTING.md` Part 3b.
+Tests: generated fixture (`tests/make-index-fixture.sh`) with 210 index
+lines, four dangling lines and two orphans; expected header numbers and TRIM
+rows documented in `TESTING.md` Part 3b.
 
 ### Phase 3 - subagent memory
 

@@ -54,7 +54,7 @@ For each OPEN entry, collect:
 - the files it touched: every `Moved:` line (`a.md -> .trash/b.md.trashed`),
   every `- <file>.md` line under Edited in place / Links cleaned / Refreshed /
   Marked historical / Stamped, and `MEMORY.md` when the entry has an index
-  line or a hook line block;
+  line, a hook line block, or an "Index lines trimmed" block;
 - its blocks: every `Removed verbatim`, `Original verbatim` and `Added`
   label, with its anchor `(at line N)` when present, and the recorded lines
   under it (lines starting with `> ` or a bare `>`), stopping at the next
@@ -100,7 +100,8 @@ order:
    `<original>.md` already exists in `memory/`, show
    `-> <original>.restored-<today>.md (name taken)`; the matching index line
    will be re-added with that new name and the change reported.
-4. Index lines to re-add: `MEMORY.md — paste at line <N>`.
+4. Index lines to re-add: `MEMORY.md — paste at line <N>`, for lines
+   removed with a trashed file and for lines under "Index lines trimmed".
 5. Needs placement: every block without an anchor. For each, ask the user for
    a line number, or "append". Collect all answers before the gate. This is
    data collection, not a second approval gate.

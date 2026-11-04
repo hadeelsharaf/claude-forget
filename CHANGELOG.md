@@ -11,6 +11,12 @@ when the `version` in `.claude-plugin/plugin.json` changes.
 - Manifest format 2: `Manifest format: 2` header line and `(at line N)`
   anchors on every Removed, Original and Added block, written by /forget and
   /checkup. Format-1 manifests still restore, with manual placement.
+- /checkup index health: the gate starts with `MEMORY.md` lines and KB
+  against the 200-line / 25 KB load limit (OVER LIMIT names the lines that
+  never load), orphan files, and dangling index lines. New TRIM action
+  removes a dangling or historical index line, manifest-recorded with its
+  anchor; /restore puts it back. Fixture generator
+  `tests/make-index-fixture.sh` and Part 3b in `TESTING.md`.
 - Tests: Part 4 restore round trip and anchor assertions in `TESTING.md`.
   Both forget+restore and checkup+restore round trips were run against the
   fixture: every file matched the baseline byte for byte afterwards.

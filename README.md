@@ -47,7 +47,13 @@ Find status memories that went stale, and fix them with one confirm. It:
    a review date), FORGET (handed off to /forget), or SKIP.
 3. Copies every line it replaces verbatim into `.trash/TRASH.md` before the
    edit, and records every line it adds — the same manifest /forget uses.
-   Nothing is ever lost, and every checkup can be undone.
+   Nothing is ever lost, and every checkup can be undone with /restore.
+4. Reports index health first: `MEMORY.md` size against Claude Code's load
+   limit (the first 200 lines or 25 KB; anything after that never loads),
+   orphan topic files with no index line, and dangling index lines whose
+   file is gone. Dangling lines (and, if you choose, lines of files marked
+   historical) can be removed with the TRIM action; each removed line goes
+   into the manifest with its line anchor, so TRIM is undoable too.
 
 The stamp convention: a perishable memory carries a top-level frontmatter
 line `review-after: YYYY-MM-DD`. Facts, lessons, and references never need
@@ -96,7 +102,7 @@ changes its folder naming again, the hook finds nothing and stays silent;
 
 A note on the index: Claude Code loads only the first 200 lines or 25 KB of
 `MEMORY.md` at session start. Entries past that point never load. Keep the
-index to one line per memory; a size check in /checkup is planned.
+index to one line per memory; /checkup reports the size and offers TRIM.
 
 ### /fresh — work memory-free
 
