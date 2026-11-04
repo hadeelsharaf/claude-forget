@@ -184,5 +184,53 @@ out=$(HOME="$scratch" CLAUDE_CODE_PROJECT_DIR_NAME=shared-name CLAUDE_PROJECT_DI
 check "project dir name ignored without config dir" "$(warn_for root_status.md)" "$out"
 check "exit 0 (name without config dir)" "0" "$rc"
 
+# --- Subagent memory folders (v0.4.0) ---------------------------------------
+agent_warn() {  # $1 = expected list lines (already "- ..." joined by \n), $2 = count
+  printf '%s\n%s\n%s' \
+    "[memory-tools] $2 memory file(s) past their review-after date - treat their contents as unverified:" \
+    "$1" \
+    'Ask the user to run /checkup (add --agents for the agent folders) to refresh, mark historical, or forget them; do not edit memory files yourself.'
+}
+
+# Case 19: project-scoped agent folder under the git root, launched from a
+# subfolder; project memory clean -> only the agent line, agent trailer.
+rm -rf "$scratch"; mkdir -p "$scratch/repo/sub"
+git -C "$scratch/repo" init -q
+gitroot=$(git -C "$scratch/repo" rev-parse --show-toplevel)
+rootmem="$scratch/.claude/projects/$(slug_of "$gitroot")/memory"
+mkdir -p "$rootmem"; cp "$root/tests/fixture-memory-baseline/reference_ci_dashboard_url.md" "$rootmem/"
+mkdir -p "$scratch/repo/.claude/agent-memory/reviewer/.trash"
+cp "$root/tests/fixture-agent-memory/reviewer/"*.md "$scratch/repo/.claude/agent-memory/reviewer/"
+cp "$root/tests/fixture-agent-memory/reviewer/flaky_test_status.md" "$scratch/repo/.claude/agent-memory/reviewer/.trash/planted.md"
+out=$(HOME="$scratch" CLAUDE_PROJECT_DIR="$scratch/repo/sub" sh "$root/hooks/check-stale"); rc=$?
+check "agent folder (project scope) reported" "$(agent_warn '- reviewer (agent): flaky_test_status.md (review-after 2026-07-01)' 1)" "$out"
+check "exit 0 (agent project scope)" "0" "$rc"
+
+# Case 20: project memory overdue too, plus a local-scope agent and a
+# user-scope agent -> project line first, then agents sorted by name.
+plant_overdue "$rootmem" "root_status.md"
+mkdir -p "$scratch/repo/.claude/agent-memory-local/alpha" "$scratch/.claude/agent-memory/zeta"
+cp "$root/tests/fixture-agent-memory/reviewer/flaky_test_status.md" "$scratch/repo/.claude/agent-memory-local/alpha/"
+cp "$root/tests/fixture-agent-memory/reviewer/flaky_test_status.md" "$scratch/.claude/agent-memory/zeta/"
+expected_agents='- root_status.md (review-after 2026-07-01)
+- alpha (agent): flaky_test_status.md (review-after 2026-07-01)
+- reviewer (agent): flaky_test_status.md (review-after 2026-07-01)
+- zeta (agent): flaky_test_status.md (review-after 2026-07-01)'
+out=$(HOME="$scratch" CLAUDE_PROJECT_DIR="$scratch/repo/sub" sh "$root/hooks/check-stale"); rc=$?
+check "project + local + user agent folders, ordered" "$(agent_warn "$expected_agents" 4)" "$out"
+check "exit 0 (all scopes)" "0" "$rc"
+
+# Case 21: agent folders present but clean, project clean -> silent, and the
+# trailer stays the old one when only the project folder is overdue.
+rm "$rootmem/root_status.md" "$scratch/repo/.claude/agent-memory/reviewer/flaky_test_status.md" \
+   "$scratch/repo/.claude/agent-memory-local/alpha/flaky_test_status.md" "$scratch/.claude/agent-memory/zeta/flaky_test_status.md"
+out=$(HOME="$scratch" CLAUDE_PROJECT_DIR="$scratch/repo/sub" sh "$root/hooks/check-stale"); rc=$?
+check "clean agent folders silent" "" "$out"
+check "exit 0 (clean agents)" "0" "$rc"
+plant_overdue "$rootmem" "root_status.md"
+out=$(HOME="$scratch" CLAUDE_PROJECT_DIR="$scratch/repo/sub" sh "$root/hooks/check-stale"); rc=$?
+check "project-only overdue keeps the plain trailer" "$(warn_for root_status.md)" "$out"
+check "exit 0 (plain trailer)" "0" "$rc"
+
 if [ "$fail" -eq 0 ]; then echo "ALL PASS"; else echo "FAILURES ABOVE"; fi
 exit "$fail"

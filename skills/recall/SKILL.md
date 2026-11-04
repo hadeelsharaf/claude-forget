@@ -1,7 +1,7 @@
 ---
 name: recall
-description: Load the minimum memory about one named item, read-only - list matching index entries first, then open exactly one topic file the user names. Use ONLY when the user explicitly asks to recall / look up / load memories about a named item (or invokes /recall). NOT for general questions, NOT for forgetting memories (that is /forget), NOT for reviewing stale memories (that is /checkup).
-argument-hint: <item to recall>
+description: Load the minimum memory about one named item, read-only - list matching index entries first, then open exactly one topic file the user names. With --agent <name> it searches that subagent's memory folder; with --agents, the project folder plus every subagent folder. Use ONLY when the user explicitly asks to recall / look up / load memories about a named item (or invokes /recall). NOT for general questions, NOT for forgetting memories (that is /forget), NOT for reviewing stale memories (that is /checkup).
+argument-hint: [--agent <name> | --agents] <item to recall>
 disable-model-invocation: true
 allowed-tools: Read, Glob, Grep, Bash
 ---
@@ -14,8 +14,9 @@ move, rename, or stamp anything.
 
 ## Step 1: Require an item
 
-The argument names the item to recall. If it is empty, ask "What should I
-recall?" and stop.
+The argument names the item to recall. If the arguments start with
+`--agent <name>` or `--agents`, strip that first (it selects the folders in
+Step 2). If the item is empty, ask "What should I recall?" and stop.
 
 ## Step 2: Locate the memory directory (fail closed)
 
@@ -28,6 +29,17 @@ any tool output.
 
 If the directory or its MEMORY.md does not exist, say "this project has no
 memories" and stop.
+
+Subagent memory: with `--agent <name>`, search that agent's folder instead —
+the first of these that exists: `<project root>/.claude/agent-memory/<name>/`,
+`<project root>/.claude/agent-memory-local/<name>/`,
+`~/.claude/agent-memory/<name>/` (`<project root>` = git repository root of
+the working directory, else the working directory; these paths are fixed by
+Claude Code, so deriving them is allowed). If more than one exists, ask
+which. If none exists, say "no memory folder for agent <name>" and stop.
+With `--agents`, search the project folder plus every agent folder found
+under those three roots; list lines carry an `agent:<name>/` prefix, and
+stage 2 opens one file wherever it lives.
 
 ## Step 3: Find matches (read-only)
 

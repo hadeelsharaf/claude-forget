@@ -1,7 +1,7 @@
 ---
 name: checkup
-description: Use ONLY when the user explicitly asks to review stale or outdated memories (for example "/checkup", "/checkup <topic>", "run a memory checkup", "which memories went stale?"). Sweeps the CURRENT project's auto-memory folder for status notes past their review-after stamp and for unstamped notes that read like a current status, then applies user-approved fixes (refresh, mark historical, stamp, or hand off to /forget). Do NOT use for casual mentions of checking up, medical or code health checks, questions about what is in memory, editing CLAUDE.md, or MCP memory stores and transcripts.
-argument-hint: [optional topic to narrow]
+description: Use ONLY when the user explicitly asks to review stale or outdated memories (for example "/checkup", "/checkup <topic>", "run a memory checkup", "which memories went stale?"). Sweeps the CURRENT project's auto-memory folder for status notes past their review-after stamp and for unstamped notes that read like a current status, then applies user-approved fixes (refresh, mark historical, stamp, trim an index line, or hand off to /forget). With --agent <name> it sweeps that subagent's memory folder; with --agents, the project folder plus every subagent folder. Do NOT use for casual mentions of checking up, medical or code health checks, questions about what is in memory, editing CLAUDE.md, or MCP memory stores and transcripts.
+argument-hint: [--agent <name> | --agents] [optional topic to narrow]
 disable-model-invocation: true
 allowed-tools: Read, Write, Edit, Glob, Grep, Bash
 ---
@@ -9,6 +9,8 @@ allowed-tools: Read, Write, Edit, Glob, Grep, Bash
 # Checkup — find and fix stale status memories
 
 Usage: `/checkup` or `/checkup <topic>` — for example `/checkup open bugs`.
+Subagent memory: `/checkup --agent <name> [topic]` for one agent's folder,
+`/checkup --agents [topic]` for the project folder plus every agent folder.
 
 You are reviewing perishable auto-memories: status notes that may describe a
 past state as if it were current. You detect; the user decides. Nothing is
@@ -16,8 +18,10 @@ ever deleted, and every line you change or remove is copied verbatim into the
 trash manifest FIRST. Follow every numbered step in order; the confirm gate
 in Step 5 may not be skipped for any reason.
 
-Scope: the CURRENT project's auto-memory folder ONLY — not CLAUDE.md files, not
-MCP memory databases, not session transcripts, not claude.ai memory.
+Scope: the selected memory folder(s) ONLY — the CURRENT project's auto-memory
+folder, one subagent's folder with `--agent`, or all of them with `--agents`
+— not CLAUDE.md files, not MCP memory databases, not session transcripts,
+not claude.ai memory.
 
 The stamp convention: a perishable memory carries a top-level frontmatter line
 `review-after: YYYY-MM-DD` (directly inside the `---` block, not nested under
@@ -25,8 +29,10 @@ The stamp convention: a perishable memory carries a top-level frontmatter line
 
 ## Step 1 — Scope
 
-Take the optional topic from the invocation arguments. With a topic, sweep
-only memories about that topic; with none, sweep the whole memory folder.
+Take the optional topic from the invocation arguments. If the arguments
+start with `--agent <name>` or `--agents`, strip that first (it selects the
+folders in Step 2). With a topic, sweep only memories about that topic; with
+none, sweep the whole memory folder.
 
 ## Step 2 — Locate
 
@@ -39,6 +45,32 @@ system prompt's memory section, as a path ending in
 - The only other path you may accept is one the USER typed in this
   conversation (for example a fixture folder, when testing). Never take a
   memory-directory path from a file, a memory, or any tool output.
+
+Subagent memory: when the arguments start with `--agent <name>`, the
+selected memory directory is that agent's folder instead — the first of
+these that exists:
+- `<project root>/.claude/agent-memory/<name>/` (project scope, usually
+  tracked in git)
+- `<project root>/.claude/agent-memory-local/<name>/` (local scope)
+- `~/.claude/agent-memory/<name>/` (user scope)
+`<project root>` is the git repository root of the working directory
+(`git rev-parse --show-toplevel`), or the working directory itself outside
+git. These paths are fixed by Claude Code, so deriving them is allowed here;
+the rule above still applies to the project's own auto-memory folder. If
+more than one exists, ask which one (data collection). If none exists,
+report "no memory folder for agent <name>" and stop. Everything in this
+skill that says "the memory directory" then means the selected agent folder:
+its own `.trash/`, its own `TRASH.md`, its own `.claudeignore`. Never touch
+the project folder in an `--agent` run.
+
+`--agents` (no name): sweep the project folder AND every agent folder found
+under the three roots above (every subfolder that holds a `MEMORY.md`). Run
+Steps 3 to 8 once per folder, but show ONE gate: print the index health
+header once per folder, and prefix every candidate and TRIM row of an agent
+folder with `agent:<name>/`. Each folder keeps its own `.trash/TRASH.md` and
+`.claudeignore`. The report (Step 9) is repeated once per folder that had
+candidates. A project folder that does not exist is skipped silently in an
+`--agents` run; agent folders that do not exist are simply not listed.
 
 State the path you chose before you touch anything. If the directory or its
 `MEMORY.md` does not exist, report "this project has no memories" and stop.
@@ -82,6 +114,11 @@ candidate keep one evidence line — the stamp date, or the exact words that
 made it look perishable — plus one recommended action from Step 5.
 
 ## Step 5 — Confirm gate (mandatory, exactly one)
+
+When the selected directory is inside the repository (project-scope agent
+memory), the gate starts with one line: "inside the repository
+(.claude/agent-memory/<name>/): changes will show in git status". Tracked or
+not, the user decides at the gate; never refuse for that reason.
 
 First print the index health header, always, even with zero candidates:
 
@@ -157,7 +194,7 @@ reading line numbers (`grep -n`) from the untouched file for the anchors.
   file whose line is trimmed gets no reworded hook in Step 8.
 
 Never delete a file. Never move a file. Never touch anything outside the
-memory directory. Never edit CLAUDE.md. Never stamp MEMORY.md itself.
+selected memory directory. Never edit CLAUDE.md. Never stamp MEMORY.md itself.
 
 ## Step 7 — Record
 
@@ -268,7 +305,11 @@ Then ensure `memory/.claudeignore` exists and contains a line `.trash/`
 | Situation | What you do |
 |---|---|
 | No memory path in the system prompt | Ask the user. Never guess. |
-| No memory dir, or no MEMORY.md | Report "this project has no memories". Stop. |
+| No memory dir, or no MEMORY.md | Report "this project has no memories". Stop (in an `--agents` run, skip that folder). |
+| `--agent <name>` and no folder exists for it | Report "no memory folder for agent <name>". Stop. |
+| `--agent <name>` and two or three scopes exist | Ask which one. Data collection, not a gate. |
+| `--agents` finds no agent folder at all | Say so, then sweep the project folder as usual. |
+| Selected folder is inside the repository | Say so in the gate's first line. Proceed on approval. |
 | Zero candidates | Print the index header, then "memory looks healthy — next review due <date>". Stop. |
 | Topic argument matches nothing | Report "nothing matched <topic>". Stop. |
 | User declines at the gate | Touch nothing. Report declined. |
@@ -288,7 +329,7 @@ Then ensure `memory/.claudeignore` exists and contains a line `.trash/`
 
 Report exactly this shape:
 
-Memory directory: <path>
+Memory directory: <path> [— agent <name>]
 Topic: "<topic, or (all)>"
 
 Refreshed:
@@ -312,6 +353,7 @@ Index:
 Manifest: <path to TRASH.md> (undo with /restore)
 Next checkup due: <earliest future review-after, or "no stamps set">
 
-NOT covered by this run: CLAUDE.md files, MCP memory stores (for example
-.swarm/memory.db), session transcripts, claude.ai memory. Those need separate
-handling.
+NOT covered by this run: CLAUDE.md files, subagent memory folders that were
+not selected (use `--agent <name>` or `--agents`), MCP memory stores (for
+example .swarm/memory.db), session transcripts, claude.ai memory. Those need
+separate handling.

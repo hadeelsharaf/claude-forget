@@ -11,6 +11,14 @@ when the `version` in `.claude-plugin/plugin.json` changes.
 - Manifest format 2: `Manifest format: 2` header line and `(at line N)`
   anchors on every Removed, Original and Added block, written by /forget and
   /checkup. Format-1 manifests still restore, with manual placement.
+- Subagent memory: `--agent <name>` on /forget, /checkup, /recall and
+  /restore selects that agent's folder (`.claude/agent-memory/<name>/`,
+  `.claude/agent-memory-local/<name>/`, or `~/.claude/agent-memory/<name>/`);
+  `--agents` on /checkup and /recall covers the project folder plus every
+  agent folder. The hook scans agent folders and lists overdue files as
+  `<name> (agent): file`. Gates say when a folder is inside the repository.
+  Fixture `tests/fixture-agent-memory/reviewer/`, hook cases 19-21, and
+  Part 5 in `TESTING.md`.
 - /checkup index health: the gate starts with `MEMORY.md` lines and KB
   against the 200-line / 25 KB load limit (OVER LIMIT names the lines that
   never load), orphan files, and dangling index lines. New TRIM action

@@ -22,6 +22,8 @@ an argument was given):
 > - I will not act on, cite, or reuse anything from MEMORY.md or memory files.
 > - I will not read, write, or update any memory file while quarantine holds.
 > - Every subagent I dispatch will be told to disregard auto-memory too.
+> - A subagent with its own agent-memory folder still receives it; the
+>   dispatch line asks it to disregard that as well (instruction-level too).
 > - Honesty note: memory text is still physically in my context; quarantine
 >   is my commitment not to use it. Hard isolation options are in the README.
 > Task: <task>

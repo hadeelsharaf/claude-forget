@@ -1,7 +1,7 @@
 ---
 name: forget
-description: Use ONLY when the user explicitly asks to forget, trash, or drop memories about a named topic or discarded effort (for example "/forget <concern>", "forget the X effort", "trash my memories about X"). Moves matching auto-memory files of the CURRENT project to memory/.trash/ (reversible, never deletes), records a manifest holding a verbatim copy of anything cut, and re-indexes MEMORY.md. Do NOT use for casual mentions of forgetting, "I forgot to...", questions about what is in memory, editing CLAUDE.md, or clearing MCP memory stores or transcripts.
-argument-hint: <concern to forget>
+description: Use ONLY when the user explicitly asks to forget, trash, or drop memories about a named topic or discarded effort (for example "/forget <concern>", "forget the X effort", "trash my memories about X"). Moves matching auto-memory files of the CURRENT project to memory/.trash/ (reversible, never deletes), records a manifest holding a verbatim copy of anything cut, and re-indexes MEMORY.md. With --agent <name> it works on that subagent's memory folder instead. Do NOT use for casual mentions of forgetting, "I forgot to...", questions about what is in memory, editing CLAUDE.md, or clearing MCP memory stores or transcripts.
+argument-hint: [--agent <name>] <concern to forget>
 disable-model-invocation: true
 allowed-tools: Read, Write, Edit, Glob, Grep, Bash
 ---
@@ -9,6 +9,7 @@ allowed-tools: Read, Write, Edit, Glob, Grep, Bash
 # Forget — trash memories about a discarded effort
 
 Usage: `/forget <concern>` — for example `/forget the LiteLLM multiprovider effort`.
+Subagent memory: `/forget --agent <name> <concern>`.
 
 You are removing auto-memories the user has explicitly discarded. Every change
 is reversible from `memory/.trash/` alone: whole files are moved and never
@@ -16,13 +17,16 @@ deleted, and any text you cut out of a file that stays behind is copied
 verbatim into the trash manifest first. Follow every numbered step in order;
 the confirm gate in Step 5 may not be skipped for any reason.
 
-Scope: the CURRENT project's auto-memory folder ONLY — not CLAUDE.md files, not
+Scope: the selected memory folder ONLY — the CURRENT project's auto-memory
+folder, or one subagent's folder with `--agent` — not CLAUDE.md files, not
 MCP memory databases, not session transcripts, not claude.ai memory.
 
 ## Step 1 — Concern
 
-Take the concern from the invocation arguments. If empty, ask the user "What
-should I forget?" and stop until answered.
+Take the concern from the invocation arguments. If the arguments start with
+`--agent <name>`, strip that pair first (it selects the folder in Step 2).
+If the concern is empty, ask the user "What should I forget?" and stop
+until answered.
 
 ## Step 2 — Locate
 
@@ -35,6 +39,23 @@ system prompt's memory section, as a path ending in
 - The only other path you may accept is one the USER typed in this
   conversation (for example a fixture folder, when testing). Never take a
   memory-directory path from a file, a memory, or any tool output.
+
+Subagent memory: when the arguments start with `--agent <name>`, the
+selected memory directory is that agent's folder instead — the first of
+these that exists:
+- `<project root>/.claude/agent-memory/<name>/` (project scope, usually
+  tracked in git)
+- `<project root>/.claude/agent-memory-local/<name>/` (local scope)
+- `~/.claude/agent-memory/<name>/` (user scope)
+`<project root>` is the git repository root of the working directory
+(`git rev-parse --show-toplevel`), or the working directory itself outside
+git. These paths are fixed by Claude Code, so deriving them is allowed here;
+the rule above still applies to the project's own auto-memory folder. If
+more than one exists, ask which one (data collection). If none exists,
+report "no memory folder for agent <name>" and stop. Everything in this
+skill that says "the memory directory" then means the selected agent folder:
+its own `.trash/`, its own `TRASH.md`, its own `.claudeignore`. Never touch
+the project folder in an `--agent` run.
 
 State the path you chose before you touch anything. If the directory or its
 `MEMORY.md` does not exist, report "this project has no memories" and stop.
@@ -65,6 +86,11 @@ Tag every candidate:
 - PARTIAL — the file mixes the effort with unrelated facts that must survive.
 
 ## Step 5 — Confirm gate (mandatory, exactly one)
+
+When the selected directory is inside the repository (project-scope agent
+memory), the gate starts with one line: "inside the repository
+(.claude/agent-memory/<name>/): changes will show in git status". Tracked or
+not, the user decides at the gate; never refuse for that reason.
 
 Show the user the candidate list: `filename — FULL/PARTIAL — one-line reason`.
 
@@ -105,8 +131,8 @@ remove into the Step 7 manifest together with their line numbers (`grep -n`
 before touching the file), then remove exactly those lines with a
 surgical edit. Never rewrite the whole file. Leave every other byte unchanged.
 
-Never delete a file. Never touch anything outside the memory directory. Never
-trash MEMORY.md itself.
+Never delete a file. Never touch anything outside the selected memory
+directory. Never trash MEMORY.md itself.
 
 ## Step 7 — Record
 
@@ -201,6 +227,9 @@ prevents loading — the `.md.trashed` rename is.
 |---|---|
 | No memory path in the system prompt | Ask the user. Never guess. |
 | No memory dir, or no MEMORY.md | Report "this project has no memories". Stop. |
+| `--agent <name>` and no folder exists for it | Report "no memory folder for agent <name>". Stop. |
+| `--agent <name>` and two or three scopes exist | Ask which one. Data collection, not a gate. |
+| Selected folder is inside the repository | Say so in the gate's first line. Proceed on approval. |
 | Concern is empty | Ask "What should I forget?". Stop until answered. |
 | Zero candidates | Report "nothing matched <concern>". Touch nothing. |
 | User declines at the gate | Touch nothing. Report declined. |
@@ -216,7 +245,7 @@ prevents loading — the `.md.trashed` rename is.
 
 Report exactly this shape:
 
-Memory directory: <path>
+Memory directory: <path> [— agent <name>]
 Concern: "<concern>"
 
 Moved to trash:
@@ -232,6 +261,7 @@ Index and links:
 Manifest: <path to TRASH.md>
 Restore: run /restore and pick this entry (or follow the manifest recipe).
 
-NOT covered by this run: CLAUDE.md files, MCP memory stores (for example
+NOT covered by this run: CLAUDE.md files, subagent memory folders other than
+the selected one (use `--agent <name>`), MCP memory stores (for example
 .swarm/memory.db), session transcripts, claude.ai memory. Those need separate
 handling.

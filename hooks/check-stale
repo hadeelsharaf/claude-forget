@@ -1,6 +1,9 @@
 #!/bin/sh
 # SessionStart hook: warn when the current project's auto-memories are past
 # their review-after date. Read-only; always exits 0; silent when clean.
+# Also scans subagent memory folders: <git root>/.claude/agent-memory/<name>/,
+# <git root>/.claude/agent-memory-local/<name>/ and <config dir>/agent-memory/
+# <name>/; their overdue files are listed as "<name> (agent): file".
 #
 # Where the memory folder is looked for, in order (first hit wins):
 #   1. `autoMemoryDirectory` from settings files, in Claude Code's precedence:
@@ -82,24 +85,50 @@ if [ -z "$mem" ] && [ -n "$cfg" ]; then
   fi
 fi
 
-[ -n "$mem" ] && [ -d "$mem" ] || exit 0
-
 # --- scan ------------------------------------------------------------------
 
 today=$(date +%Y-%m-%d) || exit 0
-found=$(awk -v today="$today" '
-  FNR==1 { fm=0; done=0; if ($0 !~ /^---/) done=1 }
-  done { next }
-  { sub(/\r$/,"") }
-  /^---[[:space:]]*$/ { fm++; if (fm>=2) done=1; next }
-  fm==1 && /^review-after:[[:space:]]*[0-9][0-9][0-9][0-9]-[0-9][0-9]-[0-9][0-9][[:space:]]*$/ {
-    d=$2; done=1
-    if (d < today) { n=split(FILENAME,p,"/"); printf "- %s (review-after %s)\n", p[n], d }
-  }' "$mem"/*.md 2>/dev/null)
+
+# scan_dir <dir> <label>: print one "- <label><file> (review-after <d>)" line
+# per overdue stamp in <dir>/*.md (never .trash/). Empty <label> for the
+# project folder; "<name> (agent): " for an agent folder.
+scan_dir() {
+  [ -d "$1" ] || return 0
+  awk -v today="$today" -v label="$2" '
+    FNR==1 { fm=0; done=0; if ($0 !~ /^---/) done=1 }
+    done { next }
+    { sub(/\r$/,"") }
+    /^---[[:space:]]*$/ { fm++; if (fm>=2) done=1; next }
+    fm==1 && /^review-after:[[:space:]]*[0-9][0-9][0-9][0-9]-[0-9][0-9]-[0-9][0-9][[:space:]]*$/ {
+      d=$2; done=1
+      if (d < today) { n=split(FILENAME,p,"/"); printf "- %s%s (review-after %s)\n", label, p[n], d }
+    }' "$1"/*.md 2>/dev/null
+}
+
+found=$(scan_dir "$mem" "")
+
+# Subagent memory folders (fixed layout, so deriving them is safe).
+abase=$(git -C "$proj" rev-parse --show-toplevel 2>/dev/null) || abase="$proj"
+agents=""
+for root in "$abase/.claude/agent-memory" "$abase/.claude/agent-memory-local" "${cfg:+$cfg/agent-memory}"; do
+  [ -n "$root" ] && [ -d "$root" ] || continue
+  for d in "$root"/*/; do
+    [ -d "$d" ] || continue
+    name=$(basename "$d")
+    out=$(scan_dir "${d%/}" "$name (agent): ")
+    [ -n "$out" ] && agents=$(printf '%s\n%s' "$agents" "$out")
+  done
+done
+agents=$(printf '%s\n' "$agents" | grep '^-' | sort)
+[ -n "$agents" ] && found=$(printf '%s\n%s' "$found" "$agents")
 
 count=$(printf '%s\n' "$found" | grep -c '^-')
 [ "$count" -gt 0 ] || exit 0
 printf '[memory-tools] %s memory file(s) past their review-after date - treat their contents as unverified:\n' "$count"
-printf '%s\n' "$found"
-printf 'Ask the user to run /checkup to refresh, mark historical, or forget them; do not edit memory files yourself.\n'
+printf '%s\n' "$found" | grep '^-'
+if [ -n "$agents" ]; then
+  printf 'Ask the user to run /checkup (add --agents for the agent folders) to refresh, mark historical, or forget them; do not edit memory files yourself.\n'
+else
+  printf 'Ask the user to run /checkup to refresh, mark historical, or forget them; do not edit memory files yourself.\n'
+fi
 exit 0

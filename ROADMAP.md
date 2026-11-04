@@ -78,7 +78,7 @@ Tests: generated fixture (`tests/make-index-fixture.sh`) with 210 index
 lines, four dangling lines and two orphans; expected header numbers and TRIM
 rows documented in `TESTING.md` Part 3b.
 
-### Phase 3 - subagent memory
+### Phase 3 - subagent memory (in progress on the dev branch)
 
 Folders Claude Code uses (one `MEMORY.md` plus topic files each):
 

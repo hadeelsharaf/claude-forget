@@ -128,17 +128,38 @@ entries first (with word counts, and a STALE tag when a file is past its
 `review-after` date), then opens exactly ONE topic file you name. It never
 writes, moves, or deletes anything.
 
-Together the skills cover the memory lifecycle: `/fresh` starts at zero,
+Together the skills cover the memory lifecycle (for the project folder and,
+with `--agent`, for each subagent's folder): `/fresh` starts at zero,
 `/recall` pulls the minimum back, `/checkup` reviews what has gone stale,
 `/forget` retires what is finished, and `/restore` undoes either of the last
 two.
 
+### Subagent memory
+
+Subagents can keep their own memory (`memory: project | local | user` in the
+agent file), stored as a `MEMORY.md` plus topic files in
+`.claude/agent-memory/<name>/`, `.claude/agent-memory-local/<name>/`, or
+`~/.claude/agent-memory/<name>/`. The same tools work there:
+
+- `/forget --agent <name> <concern>`, `/checkup --agent <name> [topic]`,
+  `/recall --agent <name> <item>`, `/restore --agent <name> [entry]` select
+  that agent's folder instead of the project folder. Each agent folder keeps
+  its own `.trash/` and manifest.
+- `/checkup --agents` and `/recall --agents` cover the project folder plus
+  every agent folder found; rows are prefixed `agent:<name>/`.
+- The freshness hook scans agent folders too and lists overdue files as
+  `<name> (agent): file`.
+- Project-scope folders usually live in git. The tools do not avoid them:
+  if your agent memory is tracked, those files are the memory and editing
+  them is the only way to fix them. The gate says "inside the repository:
+  changes will show in git status" so you can decide with that in mind.
+- `/fresh` cannot quarantine a subagent's own memory; it is loaded inside the
+  subagent. The dispatch line asks the subagent to disregard it, which is
+  instruction-level, like the rest of fresh mode.
+
 ## What it does NOT cover
 
 - CLAUDE.md / CLAUDE.local.md instruction files
-- Subagent memory folders (`.claude/agent-memory/<name>/`,
-  `.claude/agent-memory-local/<name>/`, `~/.claude/agent-memory/<name>/`) -
-  planned for a later release
 - MCP memory stores (for example `.swarm/memory.db`)
 - Session transcripts
 - claude.ai web memory

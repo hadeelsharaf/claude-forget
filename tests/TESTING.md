@@ -192,7 +192,7 @@ The gate needs a reply, so use one session id across two `claude -p` calls
     claude -p --resume "$SID" --permission-mode acceptEdits --allowedTools "$TOOLS" "<your gate answer>"
 
 Then the same two calls with `/memory-tools:restore` and `yes`, and compare
-hashes against the baseline. Parts 1+4, 3+4 and 3b+4 were run this way on
+hashes against the baseline. Parts 1+4, 3+4, 3b+4 and 5 were run this way on
 2026-11-04: every file matched its baseline after each restore.
 
 ## Part 3b — /checkup index health
@@ -229,6 +229,39 @@ Z. The report's Index block says `OVER LIMIT` is gone (206 lines, OK or NEAR
    LIMIT), `index lines trimmed: 4`, `orphan files: 2`, `dangling lines left: 0`.
 AA. Running /restore on this entry puts the four lines back at 207-210 and
    `MEMORY.md` matches the fixture byte for byte.
+
+## Part 5 — subagent memory (--agent)
+
+### Setup
+
+1. Make a scratch project: `tests/scratch/agentproj/` with `git init`, then
+   copy `tests/fixture-agent-memory/reviewer/` to
+   `tests/scratch/agentproj/.claude/agent-memory/reviewer/`.
+2. Run the skills with the working directory set to `tests/scratch/agentproj`
+   (no user-supplied memory path: the agent folder is derived from the git
+   root, which is what this part tests).
+
+### Checkup pass
+
+3. `/checkup --agent reviewer`. Expected at the gate: the first line says
+   "inside the repository (.claude/agent-memory/reviewer/): changes will show
+   in git status"; the index header shows 2 lines; one candidate,
+   `flaky_test_status.md — OVERDUE (review-after 2026-07-01)`;
+   `review_patterns.md` (a lesson) is not flagged. Approve HISTORICAL.
+
+### Assertions
+
+AB. `.claude/agent-memory/reviewer/flaky_test_status.md` has the HISTORICAL
+   banner after its frontmatter and no `review-after` line; the folder has
+   its own `.trash/TRASH.md` and `.claudeignore`; nothing under the project's
+   own auto-memory folder changed; `git status` in the scratch project shows
+   the agent folder changes (expected, it is tracked).
+AC. `/restore --agent reviewer`, approve: all three fixture files are
+   byte-identical to `tests/fixture-agent-memory/reviewer/` again.
+AD. `/checkup --agent nobody` reports "no memory folder for agent nobody" and
+   touches nothing.
+AE. Hook: cases 19-21 in `run-hook-test.sh` cover project, local and user
+   scope folders, ordering, the `--agents` trailer, and silence when clean.
 
 ## Part 4 — /restore round trip
 
