@@ -1,6 +1,13 @@
 # Fixture round-trip tests for memory-tools
 
 Run the relevant part after every edit to `skills/*/SKILL.md` or `hooks/`.
+Parts 1 and 3 each end in a manifest; Part 4 restores it with /restore.
+
+## Evals (local only)
+
+`evals/` holds a `claude plugin eval` suite that automates the gates of
+Parts 1, 3 and 3b (read-only) and the apply steps of Parts 1 and 4 (needs
+tool grants and a sandbox backend). See `evals/README.md` for the commands.
 
 ## Part 1 — /forget round trip
 
@@ -47,8 +54,14 @@ C. `project_dashboard_redesign.md` survives; its widget-export line is gone;
    its other three facts are untouched.
 D. `feedback_csv_quoting_lesson.md` survives; `[[project_widget_exporter_plan]]`
    no longer appears in it.
-E. `.trash/TRASH.md` exists, has the restore header, and one dated entry that
-   lists both moved files and the edit.
+E. `.trash/TRASH.md` exists, has the restore header with `Manifest format: 2`
+   on its second line, and one dated entry that lists both moved files and
+   the edit.
+E2. Every `Removed verbatim`, `Original verbatim` and `Added` label in the
+   entry carries `(at line N)`. Check two by hand against the baseline: the
+   dashboard line's N equals its line number in the baseline file, and each
+   `MEMORY.md line removed` N equals that line's number in the baseline
+   `MEMORY.md`.
 F. `.claudeignore` exists in `memory/` and contains `.trash/`.
 G. `MEMORY.md` has exactly 8 lines (10 baseline - 2 widget; dashboard hook may
    be reworded); no line points to a missing file.
@@ -85,6 +98,26 @@ stamp staying silent, a body-text `review-after:` outside the frontmatter
 staying silent, a stamp dated exactly today staying silent, a lowercase drive
 letter producing the same warning as uppercase, and `HOME` unset staying
 silent with exit 0.
+
+Memory-folder lookup cases (added in 0.3.1; they need `git` on PATH): the
+git repository root's slug is used when launched from a subfolder, the legacy
+launch-folder slug still works as a fallback, `autoMemoryDirectory` from user
+settings (`~/` form) wins over the project folder, a project
+`.claude/settings.local.json` beats user settings, a setting that points at a
+missing folder is ignored, `CLAUDE_CONFIG_DIR` replaces `~/.claude`,
+`CLAUDE_CODE_PROJECT_DIR_NAME` beside `CLAUDE_CONFIG_DIR` names the folder,
+and that same variable without `CLAUDE_CONFIG_DIR` is ignored.
+
+Live check (any OS): plant an overdue file in the memory folder the hook
+should find, start Claude Code from a subfolder of that repo, and ask: "If
+your context contains a line starting with [memory-tools], repeat it
+verbatim." Expect the three-line warning. With `claude --debug-file x.log`,
+the log line `Hooks: SessionStart:startup ... finished with status 0` confirms
+the hook ran; `status 126` means the script could not be executed.
+
+The same script runs in GitHub Actions on Linux and macOS (`.github/workflows/ci.yml`),
+with an informational Windows git-bash job, alongside
+`claude plugin validate . --strict`.
 
 ## Part 3 — /checkup round trip
 
@@ -146,6 +179,128 @@ P. The ci_flakiness file has exactly ONE `review-after:` line (the new
 Q. Manifest recording obeys the recording rule: the HISTORICAL banner
    appears as `> > HISTORICAL ...` and its blank line as a bare `>` under
    `Added`.
+R. Anchors: the login file's `Added (at line N)` N is the line directly after
+   the closing `---` in the final file; its `Removed verbatim (at line N)` for
+   the old `review-after` line (if any) uses the baseline line number; the
+   build file's Removed and Added blocks share the same N (a replacement).
+
+## Scripted way to run the skill round trips
+
+The gate needs a reply, so use one session id across two `claude -p` calls
+(a narrow allowlist keeps the run inside the scratch tree):
+
+    SID=$(python3 -c "import uuid;print(uuid.uuid4())")
+    TOOLS="Read,Write,Edit,Glob,Grep,Skill,Bash(mv:*),Bash(mkdir:*),Bash(grep:*),Bash(date:*),Bash(ls:*),Bash(nl:*),Bash(wc:*),Bash(head:*),Bash(cat:*),Bash(sed -n:*)"
+    claude -p --session-id "$SID" --permission-mode acceptEdits --allowedTools "$TOOLS" \
+      "/memory-tools:forget the widget exporter effort
+
+    Testing note from the user: use $PWD/tests/scratch/memory as the memory directory for this run (user-supplied path). Stop at the confirm gate and wait for my answer."
+    claude -p --resume "$SID" --permission-mode acceptEdits --allowedTools "$TOOLS" "<your gate answer>"
+
+Then the same two calls with `/memory-tools:restore` and `yes`, and compare
+hashes against the baseline. Parts 1+4, 3+4, 3b+4 and 5 were run this way on
+2026-11-04: every file matched its baseline after each restore.
+
+## Part 3b — /checkup index health
+
+### Setup
+
+1. `sh tests/make-index-fixture.sh` builds `tests/scratch/memory-index-full/`:
+   210 index lines (lines 201-210 never load), lines 207-210 dangling, two
+   orphan files, every topic file a non-perishable reference.
+
+### Checkup pass
+
+2. Follow skills/checkup/SKILL.md against `tests/scratch/memory-index-full/`
+   (Step 2 user-supplied-path override), no topic.
+
+Expected at the gate:
+- Header: `Index: MEMORY.md 210 lines, <about 10> KB of 200 lines / 25 KB`,
+  an `OVER LIMIT: lines 201 to 210 never load` line, `Orphan files: 2 —
+  orphan_a.md, orphan_b.md`, `Dangling index lines: 4`.
+- Candidate table: empty (no stamps, nothing perishable).
+- Index lines section: four TRIM rows for lines 207, 208, 209, 210, each
+  `DANGLING — points to topic_2xx.md (missing)`.
+
+Approve TRIM for all four.
+
+### Assertions after the run
+
+X. `MEMORY.md` has 206 lines; lines 1-206 are byte-identical to the fixture's
+   first 206 lines; no topic file changed.
+Y. `.trash/TRASH.md` has one checkup entry with an `Index lines trimmed`
+   section holding four `Removed verbatim (at line N)` blocks, N = 207..210,
+   each line copied exactly.
+Z. The report's Index block says `OVER LIMIT` is gone (206 lines, OK or NEAR
+   LIMIT), `index lines trimmed: 4`, `orphan files: 2`, `dangling lines left: 0`.
+AA. Running /restore on this entry puts the four lines back at 207-210 and
+   `MEMORY.md` matches the fixture byte for byte.
+
+## Part 5 — subagent memory (--agent)
+
+### Setup
+
+1. Make a scratch project: `tests/scratch/agentproj/` with `git init`, then
+   copy `tests/fixture-agent-memory/reviewer/` to
+   `tests/scratch/agentproj/.claude/agent-memory/reviewer/`.
+2. Run the skills with the working directory set to `tests/scratch/agentproj`
+   (no user-supplied memory path: the agent folder is derived from the git
+   root, which is what this part tests).
+
+### Checkup pass
+
+3. `/checkup --agent reviewer`. Expected at the gate: the first line says
+   "inside the repository (.claude/agent-memory/reviewer/): changes will show
+   in git status"; the index header shows 2 lines; one candidate,
+   `flaky_test_status.md — OVERDUE (review-after 2026-07-01)`;
+   `review_patterns.md` (a lesson) is not flagged. Approve HISTORICAL.
+
+### Assertions
+
+AB. `.claude/agent-memory/reviewer/flaky_test_status.md` has the HISTORICAL
+   banner after its frontmatter and no `review-after` line; the folder has
+   its own `.trash/TRASH.md` and `.claudeignore`; nothing under the project's
+   own auto-memory folder changed; `git status` in the scratch project shows
+   the agent folder changes (expected, it is tracked).
+AC. `/restore --agent reviewer`, approve: all three fixture files are
+   byte-identical to `tests/fixture-agent-memory/reviewer/` again.
+AD. `/checkup --agent nobody` reports "no memory folder for agent nobody" and
+   touches nothing.
+AE. Hook: cases 19-21 in `run-hook-test.sh` cover project, local and user
+   scope folders, ordering, the `--agents` trailer, and silence when clean.
+
+## Part 4 — /restore round trip
+
+Run after Part 1 or Part 3, on the same scratch tree, without restoring by
+hand first.
+
+1. Follow skills/restore/SKILL.md literally against `tests/scratch/memory/`
+   (Step 2 user-supplied-path override) with no hint. Expect exactly one
+   OPEN entry in the list, not BLOCKED, with zero "needs placement" blocks.
+2. Pick it. The dry run must list, for Part 1: two files to move back, one
+   paste in `project_dashboard_redesign.md`, one Added deletion plus one
+   paste in `feedback_csv_quoting_lesson.md` (the link line replacement), two
+   index lines to re-add, and the hook rewording if one was made. For Part 3:
+   Added deletions and pastes for the three checkup files and the hook line.
+3. Approve everything.
+
+### Assertions after the run
+
+S. Every file in `tests/scratch/memory/` except `.trash/` and
+   `.claudeignore` is byte-identical to `tests/fixture-memory-baseline/`
+   (11/11 hashes match). This is the proof that the anchors are right.
+T. `.trash/` holds only `TRASH.md`; no `.trashed` file remains.
+U. The manifest entry is intact and its heading is followed by a line
+   `RESTORED <today>`; nothing else in `TRASH.md` changed.
+V. Running /restore again reports "nothing to restore".
+W. I11 out-of-tree guard and `git status --porcelain` as in Part 1.
+
+### Format-1 manifest (manual placement)
+
+Edit a copy of a Part 1 manifest to strip every `(at line N)`. Run
+/restore: every block must appear under "needs placement", the skill must
+ask for a line or "append" for each before the gate, and after approval
+with the correct lines the hashes must again match 11/11.
 
 ### Restore pass
 

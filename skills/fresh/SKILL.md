@@ -1,8 +1,10 @@
 ---
 name: fresh
-description: Start working memory-free in this session - an instruction-based quarantine of auto-memory. Use ONLY when the user explicitly invokes /fresh or asks to work without memories / with a clean slate on a task. NOT for casual "fresh start" phrasing about redoing work, NOT for clearing or deleting memory (that is /forget), NOT for reviewing stale memories (that is /checkup).
+description: Work memory-free for the rest of the session: an instruction-level quarantine of auto-memory (no citing, reading, or writing memory; subagents told the same). Two doors back: /recall <item> and "end fresh mode".
+when_to_use: Use ONLY when the user explicitly invokes /fresh or asks to work without memories / with a clean slate on a task. NOT for casual "fresh start" phrasing about redoing work, NOT for clearing or deleting memory (that is /forget), NOT for reviewing stale memories (that is /checkup).
 argument-hint: [task to work on memory-free]
 disable-model-invocation: true
+compatibility: Tested on Claude Code 2.1.318. Needs plugin skills, SessionStart hooks, and a bash on PATH (Git Bash on Windows).
 ---
 
 # /fresh - work memory-free in this session
@@ -22,6 +24,8 @@ an argument was given):
 > - I will not act on, cite, or reuse anything from MEMORY.md or memory files.
 > - I will not read, write, or update any memory file while quarantine holds.
 > - Every subagent I dispatch will be told to disregard auto-memory too.
+> - A subagent with its own agent-memory folder still receives it; the
+>   dispatch line asks it to disregard that as well (instruction-level too).
 > - Honesty note: memory text is still physically in my context; quarantine
 >   is my commitment not to use it. Hard isolation options are in the README.
 > Task: <task>

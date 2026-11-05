@@ -101,5 +101,155 @@ out=$(HOME= CLAUDE_PROJECT_DIR="$proj" sh "$root/hooks/check-stale"); rc=$?
 check "HOME unset silent" "" "$out"
 check "exit 0 (HOME unset)" "0" "$rc"
 
+# --- Memory-folder lookup cases (v0.3.1) ------------------------------------
+# Helper: slug a path the way the hook does (git-bash /x/ and lowercase drive
+# letters normalized first), so these cases pass on Linux, macOS and git-bash.
+slug_of() {
+  p="$1"
+  case "$p" in /[A-Za-z]/*) dl=$(printf '%s' "$p" | cut -c2 | tr 'a-z' 'A-Z'); p="$dl:${p#/?}";; esac
+  case "$p" in [a-z]:*) dl=$(printf '%s' "$p" | cut -c1 | tr 'a-z' 'A-Z'); p="$dl${p#?}";; esac
+  printf '%s' "$p" | sed 's/[^A-Za-z0-9]/-/g'
+}
+plant_overdue() {  # $1 = memory dir, $2 = file name
+  mkdir -p "$1"
+  cp "$root/tests/fixture-memory-baseline/project_build_pipeline_status.md" "$1/$2"
+}
+warn_for() {  # $1 = file name -> expected one-file warning
+  printf '%s\n%s\n%s' \
+    '[memory-tools] 1 memory file(s) past their review-after date - treat their contents as unverified:' \
+    "- $1 (review-after 2026-07-01)" \
+    'Ask the user to run /checkup to refresh, mark historical, or forget them; do not edit memory files yourself.'
+}
+
+# Case 11: launched from a subfolder of a git repo -> the repo root's slug is
+# used (all worktrees and subfolders share one memory folder).
+rm -rf "$scratch"; mkdir -p "$scratch/repo/sub"
+git -C "$scratch/repo" init -q
+gitroot=$(git -C "$scratch/repo" rev-parse --show-toplevel)
+rootmem="$scratch/.claude/projects/$(slug_of "$gitroot")/memory"
+plant_overdue "$rootmem" "root_status.md"
+out=$(HOME="$scratch" CLAUDE_PROJECT_DIR="$scratch/repo/sub" sh "$root/hooks/check-stale"); rc=$?
+check "git root slug used from a subfolder" "$(warn_for root_status.md)" "$out"
+check "exit 0 (git root)" "0" "$rc"
+
+# Case 12: no folder for the git root -> legacy launch-folder slug still works.
+rm -rf "$rootmem"
+submem="$scratch/.claude/projects/$(slug_of "$scratch/repo/sub")/memory"
+plant_overdue "$submem" "sub_status.md"
+out=$(HOME="$scratch" CLAUDE_PROJECT_DIR="$scratch/repo/sub" sh "$root/hooks/check-stale"); rc=$?
+check "legacy launch-folder slug fallback" "$(warn_for sub_status.md)" "$out"
+check "exit 0 (legacy fallback)" "0" "$rc"
+
+# Case 13: autoMemoryDirectory in user settings wins over the project folder.
+plant_overdue "$scratch/custom-mem" "custom_status.md"
+mkdir -p "$scratch/.claude"
+printf '{\n  "autoMemoryDirectory": "~/custom-mem"\n}\n' > "$scratch/.claude/settings.json"
+out=$(HOME="$scratch" CLAUDE_PROJECT_DIR="$scratch/repo/sub" sh "$root/hooks/check-stale"); rc=$?
+check "autoMemoryDirectory (user settings, ~/ form)" "$(warn_for custom_status.md)" "$out"
+check "exit 0 (user setting)" "0" "$rc"
+
+# Case 14: project .claude/settings.local.json beats user settings.
+plant_overdue "$scratch/local-mem" "local_status.md"
+mkdir -p "$scratch/repo/.claude"
+printf '{"autoMemoryDirectory": "%s"}\n' "$scratch/local-mem" > "$scratch/repo/.claude/settings.local.json"
+out=$(HOME="$scratch" CLAUDE_PROJECT_DIR="$scratch/repo" sh "$root/hooks/check-stale"); rc=$?
+check "project settings.local.json beats user settings" "$(warn_for local_status.md)" "$out"
+check "exit 0 (local setting)" "0" "$rc"
+
+# Case 15: autoMemoryDirectory pointing at a folder that does not exist yet
+# is final: the hook stays silent instead of scanning the legacy folder.
+printf '{"autoMemoryDirectory": "%s"}\n' "$scratch/does-not-exist" > "$scratch/repo/.claude/settings.local.json"
+rm "$scratch/.claude/settings.json"
+out=$(HOME="$scratch" CLAUDE_PROJECT_DIR="$scratch/repo" sh "$root/hooks/check-stale"); rc=$?
+check "missing autoMemoryDirectory is final (silent)" "" "$out"
+check "exit 0 (missing setting dir)" "0" "$rc"
+rm "$scratch/repo/.claude/settings.local.json"
+
+# Case 16: CLAUDE_CONFIG_DIR replaces ~/.claude.
+cfgdir="$scratch/cfg"
+plant_overdue "$cfgdir/projects/$(slug_of "$gitroot")/memory" "cfg_status.md"
+out=$(HOME="$scratch" CLAUDE_CONFIG_DIR="$cfgdir" CLAUDE_PROJECT_DIR="$scratch/repo/sub" sh "$root/hooks/check-stale"); rc=$?
+check "CLAUDE_CONFIG_DIR respected" "$(warn_for cfg_status.md)" "$out"
+check "exit 0 (config dir)" "0" "$rc"
+
+# Case 17: CLAUDE_CODE_PROJECT_DIR_NAME beside CLAUDE_CONFIG_DIR names the folder.
+plant_overdue "$cfgdir/projects/shared-name/memory" "named_status.md"
+out=$(HOME="$scratch" CLAUDE_CONFIG_DIR="$cfgdir" CLAUDE_CODE_PROJECT_DIR_NAME=shared-name CLAUDE_PROJECT_DIR="$scratch/repo/sub" sh "$root/hooks/check-stale"); rc=$?
+check "CLAUDE_CODE_PROJECT_DIR_NAME respected" "$(warn_for named_status.md)" "$out"
+check "exit 0 (project dir name)" "0" "$rc"
+
+# Case 17b: a name override whose folder does not exist yet is final (silent).
+out=$(HOME="$scratch" CLAUDE_CONFIG_DIR="$cfgdir" CLAUDE_CODE_PROJECT_DIR_NAME=not-yet CLAUDE_PROJECT_DIR="$scratch/repo/sub" sh "$root/hooks/check-stale"); rc=$?
+check "missing project dir name folder is final (silent)" "" "$out"
+check "exit 0 (missing name folder)" "0" "$rc"
+
+# Case 18: CLAUDE_CODE_PROJECT_DIR_NAME without CLAUDE_CONFIG_DIR is ignored
+# (the docs require both), so the git-root slug under ~/.claude is used.
+plant_overdue "$rootmem" "root_status.md"
+out=$(HOME="$scratch" CLAUDE_CODE_PROJECT_DIR_NAME=shared-name CLAUDE_PROJECT_DIR="$scratch/repo/sub" sh "$root/hooks/check-stale"); rc=$?
+check "project dir name ignored without config dir" "$(warn_for root_status.md)" "$out"
+check "exit 0 (name without config dir)" "0" "$rc"
+
+# --- Subagent memory folders (v0.4.0) ---------------------------------------
+agent_warn() {  # $1 = expected list lines (already "- ..." joined by \n), $2 = count
+  printf '%s\n%s\n%s' \
+    "[memory-tools] $2 memory file(s) past their review-after date - treat their contents as unverified:" \
+    "$1" \
+    'Ask the user to run /checkup (add --agents for the agent folders) to refresh, mark historical, or forget them; do not edit memory files yourself.'
+}
+
+# Case 19: project-scoped agent folder under the git root, launched from a
+# subfolder; project memory clean -> only the agent line, agent trailer.
+rm -rf "$scratch"; mkdir -p "$scratch/repo/sub"
+git -C "$scratch/repo" init -q
+gitroot=$(git -C "$scratch/repo" rev-parse --show-toplevel)
+rootmem="$scratch/.claude/projects/$(slug_of "$gitroot")/memory"
+mkdir -p "$rootmem"; cp "$root/tests/fixture-memory-baseline/reference_ci_dashboard_url.md" "$rootmem/"
+mkdir -p "$scratch/repo/.claude/agent-memory/reviewer/.trash"
+cp "$root/tests/fixture-agent-memory/reviewer/"*.md "$scratch/repo/.claude/agent-memory/reviewer/"
+cp "$root/tests/fixture-agent-memory/reviewer/flaky_test_status.md" "$scratch/repo/.claude/agent-memory/reviewer/.trash/planted.md"
+out=$(HOME="$scratch" CLAUDE_PROJECT_DIR="$scratch/repo/sub" sh "$root/hooks/check-stale"); rc=$?
+check "agent folder (project scope) reported" "$(agent_warn '- reviewer (agent): flaky_test_status.md (review-after 2026-07-01)' 1)" "$out"
+check "exit 0 (agent project scope)" "0" "$rc"
+
+# Case 20: project memory overdue too, plus a local-scope agent and a
+# user-scope agent -> project line first, then agents sorted by name.
+plant_overdue "$rootmem" "root_status.md"
+mkdir -p "$scratch/repo/.claude/agent-memory-local/alpha" "$scratch/.claude/agent-memory/zeta"
+cp "$root/tests/fixture-agent-memory/reviewer/flaky_test_status.md" "$scratch/repo/.claude/agent-memory-local/alpha/"
+cp "$root/tests/fixture-agent-memory/reviewer/flaky_test_status.md" "$scratch/.claude/agent-memory/zeta/"
+expected_agents='- root_status.md (review-after 2026-07-01)
+- alpha (agent): flaky_test_status.md (review-after 2026-07-01)
+- reviewer (agent): flaky_test_status.md (review-after 2026-07-01)
+- zeta (agent): flaky_test_status.md (review-after 2026-07-01)'
+out=$(HOME="$scratch" CLAUDE_PROJECT_DIR="$scratch/repo/sub" sh "$root/hooks/check-stale"); rc=$?
+check "project + local + user agent folders, ordered" "$(agent_warn "$expected_agents" 4)" "$out"
+check "exit 0 (all scopes)" "0" "$rc"
+
+# Case 20b: with CLAUDE_CONFIG_DIR set, both ~/.claude/agent-memory and
+# <config dir>/agent-memory are scanned, each once.
+mkdir -p "$cfgdir/agent-memory/omega"
+cp "$root/tests/fixture-agent-memory/reviewer/flaky_test_status.md" "$cfgdir/agent-memory/omega/"
+expected_both='- alpha (agent): flaky_test_status.md (review-after 2026-07-01)
+- omega (agent): flaky_test_status.md (review-after 2026-07-01)
+- reviewer (agent): flaky_test_status.md (review-after 2026-07-01)
+- zeta (agent): flaky_test_status.md (review-after 2026-07-01)'
+out=$(HOME="$scratch" CLAUDE_CONFIG_DIR="$cfgdir" CLAUDE_PROJECT_DIR="$scratch/repo/sub" sh "$root/hooks/check-stale"); rc=$?
+check "home and config-dir agent roots both scanned" "$(agent_warn "$expected_both" 4)" "$out"
+check "exit 0 (both agent roots)" "0" "$rc"
+rm -rf "$cfgdir/agent-memory"
+
+# Case 21: agent folders present but clean, project clean -> silent, and the
+# trailer stays the old one when only the project folder is overdue.
+rm "$rootmem/root_status.md" "$scratch/repo/.claude/agent-memory/reviewer/flaky_test_status.md" \
+   "$scratch/repo/.claude/agent-memory-local/alpha/flaky_test_status.md" "$scratch/.claude/agent-memory/zeta/flaky_test_status.md"
+out=$(HOME="$scratch" CLAUDE_PROJECT_DIR="$scratch/repo/sub" sh "$root/hooks/check-stale"); rc=$?
+check "clean agent folders silent" "" "$out"
+check "exit 0 (clean agents)" "0" "$rc"
+plant_overdue "$rootmem" "root_status.md"
+out=$(HOME="$scratch" CLAUDE_PROJECT_DIR="$scratch/repo/sub" sh "$root/hooks/check-stale"); rc=$?
+check "project-only overdue keeps the plain trailer" "$(warn_for root_status.md)" "$out"
+check "exit 0 (plain trailer)" "0" "$rc"
+
 if [ "$fail" -eq 0 ]; then echo "ALL PASS"; else echo "FAILURES ABOVE"; fi
 exit "$fail"

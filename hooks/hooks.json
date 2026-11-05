@@ -2,11 +2,11 @@
   "hooks": {
     "SessionStart": [
       {
-        "matcher": "startup|resume|clear",
+        "matcher": "startup|resume|clear|compact|fork",
         "hooks": [
           {
             "type": "command",
-            "command": "\"${CLAUDE_PLUGIN_ROOT}/hooks/run-hook.cmd\" check-stale",
+            "command": "bash \"${CLAUDE_PLUGIN_ROOT}/hooks/check-stale\"",
             "shell": "bash",
             "async": false
           }

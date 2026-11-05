@@ -1,0 +1,21 @@
+<meta charset="utf-8">
+<style>
+  *{box-sizing:border-box;margin:0;padding:0}
+  html,body{width:1024px;height:1024px}
+  body{font-family:system-ui,-apple-system,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+       background:linear-gradient(135deg,#f7f3ff 0%,#e4effd 55%,#dff4ef 100%);
+       display:flex;align-items:center;justify-content:center}
+  .card{width:1024px;height:1024px;position:relative;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:48px}
+  .mark{font-size:380px;font-weight:800;letter-spacing:-.04em;color:#6f8fd8;line-height:1}
+  .mark span{color:#b79be6}
+  .chips{display:flex;gap:26px}
+  .chip{font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;font-size:54px;font-weight:700;
+        padding:18px 36px;border-radius:999px;background:#fff;color:#6f8fd8;border:5px solid #c9d6f2}
+  .chip.solid{background:#b79be6;color:#fff;border-color:#b79be6}
+  .ring{position:absolute;inset:40px;border-radius:260px;border:14px solid rgba(183,155,230,.25)}
+</style>
+<body><div class="card">
+  <div class="ring"></div>
+  <div class="mark"><span>/</span>fg</div>
+  <div class="chips"><div class="chip">/recall</div><div class="chip solid">/forget</div></div>
+</div></body>

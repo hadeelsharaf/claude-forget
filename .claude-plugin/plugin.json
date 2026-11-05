@@ -1,8 +1,12 @@
 {
+  "$schema": "https://anthropic.com/claude-code/plugin.schema.json",
   "name": "memory-tools",
-  "description": "Auto-memory lifecycle for Claude Code: /forget trashes memories safely, /checkup reviews stale ones, /fresh works memory-free, /recall loads the minimum back - plus a freshness hook that warns about overdue notes.",
-  "version": "0.3.0",
+  "version": "0.4.0",
+  "description": "Auto-memory lifecycle for Claude Code: /forget trashes memories safely, /checkup reviews stale ones, /fresh works memory-free, /recall loads the minimum back, /restore undoes any of it - plus a freshness hook that warns about overdue notes.",
   "author": { "name": "Hadeel Sharaf" },
   "license": "MIT",
-  "homepage": "https://github.com/hadeelsharaf/claude-forget"
+  "homepage": "https://github.com/hadeelsharaf/claude-forget",
+  "repository": "https://github.com/hadeelsharaf/claude-forget",
+  "keywords": ["memory", "auto-memory", "hygiene", "forget", "stale", "lifecycle"],
+  "icon": "./assets/icon.png"
 }

@@ -1,35 +1,144 @@
 #!/bin/sh
 # SessionStart hook: warn when the current project's auto-memories are past
 # their review-after date. Read-only; always exits 0; silent when clean.
+# Also scans subagent memory folders: <git root>/.claude/agent-memory/<name>/,
+# <git root>/.claude/agent-memory-local/<name>/ and <config dir>/agent-memory/
+# <name>/; their overdue files are listed as "<name> (agent): file".
+#
+# Where the memory folder is looked for, in order (first hit wins):
+#   1. `autoMemoryDirectory` from settings files, in Claude Code's precedence:
+#      managed (policy) > .claude/settings.local.json > .claude/settings.json
+#      > <config dir>/settings.json
+#   2. <config dir>/projects/<CLAUDE_CODE_PROJECT_DIR_NAME>/memory, when that
+#      variable is set beside CLAUDE_CONFIG_DIR
+#   3. <config dir>/projects/<slug of the git repository root>/memory
+#   4. <config dir>/projects/<slug of CLAUDE_PROJECT_DIR>/memory (legacy)
+# A path named by a setting (1) or by the name override (2) is final: when it
+# does not exist yet the hook stays silent rather than scanning another folder.
+# <config dir> is CLAUDE_CONFIG_DIR, else $HOME/.claude. The slug replaces
+# every non-alphanumeric character with "-".
 
-dir="${CLAUDE_PROJECT_DIR:-$PWD}"
-# Normalize a git-bash /x/... path to the X:/... form Claude Code slugs.
-case "$dir" in
-  /[A-Za-z]/*) dl=$(printf '%s' "$dir" | cut -c2 | tr 'a-z' 'A-Z')
-               dir="$dl:${dir#/?}" ;;
-esac
-case "$dir" in
-  [a-z]:*) dl=$(printf '%s' "$dir" | cut -c1 | tr 'a-z' 'A-Z')
-           dir="$dl${dir#?}" ;;
-esac
-slug=$(printf '%s' "$dir" | sed 's/[^A-Za-z0-9]/-/g')
-mem="$HOME/.claude/projects/$slug/memory"
-[ -d "$mem" ] || exit 0
+# --- helpers ---------------------------------------------------------------
+
+# Normalize a git-bash /x/... path or a lowercase drive letter to X:/... form.
+normalize_path() {
+  p="$1"
+  case "$p" in
+    /[A-Za-z]/*) dl=$(printf '%s' "$p" | cut -c2 | tr 'a-z' 'A-Z')
+                 p="$dl:${p#/?}" ;;
+  esac
+  case "$p" in
+    [a-z]:*) dl=$(printf '%s' "$p" | cut -c1 | tr 'a-z' 'A-Z')
+             p="$dl${p#?}" ;;
+  esac
+  printf '%s' "$p"
+}
+
+slugify() { printf '%s' "$1" | sed 's/[^A-Za-z0-9]/-/g'; }
+
+# Print the autoMemoryDirectory value from a settings file, or nothing.
+# Tolerant single-line match; "~/" is expanded, "\\" is unescaped.
+setting_dir() {
+  [ -f "$1" ] || return 0
+  v=$(sed -n 's/.*"autoMemoryDirectory"[[:space:]]*:[[:space:]]*"\([^"]*\)".*/\1/p' "$1" 2>/dev/null | head -n 1)
+  [ -n "$v" ] || return 0
+  v=$(printf '%s' "$v" | sed 's/\\\\/\\/g')
+  case "$v" in
+    "~/"*) [ -n "$HOME" ] || return 0; v="$HOME/${v#\~/}" ;;
+  esac
+  printf '%s' "$v"
+}
+
+# --- resolve the memory directory -----------------------------------------
+
+proj="${CLAUDE_PROJECT_DIR:-$PWD}"
+cfg="${CLAUDE_CONFIG_DIR:-${HOME:+$HOME/.claude}}"
+mem=""
+pinned=""   # a path chosen by a setting or name override: never fall through
+base=$(git -C "$proj" rev-parse --show-toplevel 2>/dev/null) || base=""
+
+# 1. autoMemoryDirectory, highest-precedence scope first.
+for f in \
+  "/etc/claude-code/managed-settings.json" \
+  "/Library/Application Support/ClaudeCode/managed-settings.json" \
+  "${PROGRAMDATA:-C:/ProgramData}/ClaudeCode/managed-settings.json" \
+  "$proj/.claude/settings.local.json" \
+  "$proj/.claude/settings.json" \
+  "${cfg:+$cfg/settings.json}"
+do
+  [ -n "$f" ] || continue
+  d=$(setting_dir "$f")
+  [ -n "$d" ] || continue
+  pinned="$d"; [ -d "$d" ] && mem="$d"
+  break   # highest-precedence setting wins, present or not
+done
+
+# 2-4. Project folders under <config dir>/projects.
+if [ -z "$mem" ] && [ -z "$pinned" ] && [ -n "$cfg" ]; then
+  if [ -n "$CLAUDE_CONFIG_DIR" ] && [ -n "$CLAUDE_CODE_PROJECT_DIR_NAME" ]; then
+    pinned="$cfg/projects/$CLAUDE_CODE_PROJECT_DIR_NAME/memory"
+    [ -d "$pinned" ] && mem="$pinned"
+  fi
+  if [ -z "$mem" ] && [ -z "$pinned" ]; then
+    [ -n "$base" ] && base=$(normalize_path "$base")
+    launch=$(normalize_path "$proj")
+    for cand in "$base" "$launch"; do
+      [ -n "$cand" ] || continue
+      d="$cfg/projects/$(slugify "$cand")/memory"
+      if [ -d "$d" ]; then mem="$d"; break; fi
+    done
+  fi
+fi
+
+# --- scan ------------------------------------------------------------------
 
 today=$(date +%Y-%m-%d) || exit 0
-found=$(awk -v today="$today" '
-  FNR==1 { fm=0; done=0; if ($0 !~ /^---/) done=1 }
-  done { next }
-  { sub(/\r$/,"") }
-  /^---[[:space:]]*$/ { fm++; if (fm>=2) done=1; next }
-  fm==1 && /^review-after:[[:space:]]*[0-9][0-9][0-9][0-9]-[0-9][0-9]-[0-9][0-9][[:space:]]*$/ {
-    d=$2; done=1
-    if (d < today) { n=split(FILENAME,p,"/"); printf "- %s (review-after %s)\n", p[n], d }
-  }' "$mem"/*.md 2>/dev/null)
+
+# scan_dir <dir> <label>: print one "- <label><file> (review-after <d>)" line
+# per overdue stamp in <dir>/*.md (never .trash/). Empty <label> for the
+# project folder; "<name> (agent): " for an agent folder.
+scan_dir() {
+  [ -d "$1" ] || return 0
+  awk -v today="$today" -v label="$2" '
+    FNR==1 { fm=0; done=0; if ($0 !~ /^---/) done=1 }
+    done { next }
+    { sub(/\r$/,"") }
+    /^---[[:space:]]*$/ { fm++; if (fm>=2) done=1; next }
+    fm==1 && /^review-after:[[:space:]]*[0-9][0-9][0-9][0-9]-[0-9][0-9]-[0-9][0-9][[:space:]]*$/ {
+      d=$2; done=1
+      if (d < today) { n=split(FILENAME,p,"/"); printf "- %s%s (review-after %s)\n", label, p[n], d }
+    }' "$1"/*.md 2>/dev/null
+}
+
+found=$(scan_dir "$mem" "")
+
+# Subagent memory folders (fixed layout, so deriving them is safe). User
+# scope is documented as ~/.claude/agent-memory; also check the config dir
+# when it differs.
+abase="${base:-$proj}"
+ucfg="${cfg:+$cfg/agent-memory}"
+uhome="${HOME:+$HOME/.claude/agent-memory}"
+[ "$ucfg" = "$uhome" ] && ucfg=""
+agents=""
+for root in "$abase/.claude/agent-memory" "$abase/.claude/agent-memory-local" "$uhome" "$ucfg"; do
+  [ -n "$root" ] && [ -d "$root" ] || continue
+  for d in "$root"/*/; do
+    [ -d "$d" ] || continue
+    name=$(basename "$d")
+    out=$(scan_dir "${d%/}" "$name (agent): ")
+    [ -n "$out" ] && agents=$(printf '%s\n%s' "$agents" "$out")
+  done
+done
+agents=$(printf '%s\n' "$agents" | grep '^-' | sort)
+[ -n "$agents" ] && found=$(printf '%s\n%s' "$found" "$agents")
 
 count=$(printf '%s\n' "$found" | grep -c '^-')
 [ "$count" -gt 0 ] || exit 0
 printf '[memory-tools] %s memory file(s) past their review-after date - treat their contents as unverified:\n' "$count"
-printf '%s\n' "$found"
-printf 'Ask the user to run /checkup to refresh, mark historical, or forget them; do not edit memory files yourself.\n'
+printf '%s\n' "$found" | grep '^-'
+if [ -n "$agents" ]; then
+  printf 'Ask the user to run /checkup (add --agents for the agent folders) to refresh, mark historical, or forget them; do not edit memory files yourself.\n'
+else
+  printf 'Ask the user to run /checkup to refresh, mark historical, or forget them; do not edit memory files yourself.\n'
+fi
 exit 0

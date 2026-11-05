@@ -1,0 +1,44 @@
+name: ci
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  hook-test:
+    name: hook test (${{ matrix.os }})
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, macos-latest]
+    steps:
+      - uses: actions/checkout@v4
+      - name: Run the scripted hook test
+        run: sh tests/run-hook-test.sh
+
+  # Informational: exercises the git-bash path used on Windows. Not yet
+  # verified on a Windows runner, so a failure does not block the build.
+  hook-test-windows:
+    name: hook test (windows, informational)
+    runs-on: windows-latest
+    continue-on-error: true
+    steps:
+      - uses: actions/checkout@v4
+      - name: Run the scripted hook test under git-bash
+        shell: bash
+        run: sh tests/run-hook-test.sh
+
+  validate:
+    name: plugin validate --strict
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Install Claude Code
+        run: npm install -g @anthropic-ai/claude-code
+      - name: Validate manifests, skills and hooks
+        run: claude plugin validate . --strict
