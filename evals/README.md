@@ -27,4 +27,7 @@ in-repo. Use `--runs 1` while iterating; the default is 3 runs per case.
 
 Status 2026-11-05: the three gate cases pass (forget-gate 2/2 runs, checkup-gate
 and checkup-index-gate 1/1). The apply cases have not been run yet: they need
-a sandbox backend, which the authoring machine lacked.
+a sandbox backend, which the authoring machine lacked. Their prompts
+pre-approve the confirm gate in the same message; if a run stops at the gate
+instead (score 0 on the file graders), record a gate turn as
+`context.history_file` and make the prompt the plain "yes".

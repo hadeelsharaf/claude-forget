@@ -13,6 +13,8 @@
 #      variable is set beside CLAUDE_CONFIG_DIR
 #   3. <config dir>/projects/<slug of the git repository root>/memory
 #   4. <config dir>/projects/<slug of CLAUDE_PROJECT_DIR>/memory (legacy)
+# A path named by a setting (1) or by the name override (2) is final: when it
+# does not exist yet the hook stays silent rather than scanning another folder.
 # <config dir> is CLAUDE_CONFIG_DIR, else $HOME/.claude. The slug replaces
 # every non-alphanumeric character with "-".
 
@@ -52,6 +54,8 @@ setting_dir() {
 proj="${CLAUDE_PROJECT_DIR:-$PWD}"
 cfg="${CLAUDE_CONFIG_DIR:-${HOME:+$HOME/.claude}}"
 mem=""
+pinned=""   # a path chosen by a setting or name override: never fall through
+base=$(git -C "$proj" rev-parse --show-toplevel 2>/dev/null) || base=""
 
 # 1. autoMemoryDirectory, highest-precedence scope first.
 for f in \
@@ -64,17 +68,18 @@ for f in \
 do
   [ -n "$f" ] || continue
   d=$(setting_dir "$f")
-  if [ -n "$d" ] && [ -d "$d" ]; then mem="$d"; break; fi
+  [ -n "$d" ] || continue
+  pinned="$d"; [ -d "$d" ] && mem="$d"
+  break   # highest-precedence setting wins, present or not
 done
 
 # 2-4. Project folders under <config dir>/projects.
-if [ -z "$mem" ] && [ -n "$cfg" ]; then
+if [ -z "$mem" ] && [ -z "$pinned" ] && [ -n "$cfg" ]; then
   if [ -n "$CLAUDE_CONFIG_DIR" ] && [ -n "$CLAUDE_CODE_PROJECT_DIR_NAME" ]; then
-    d="$cfg/projects/$CLAUDE_CODE_PROJECT_DIR_NAME/memory"
-    [ -d "$d" ] && mem="$d"
+    pinned="$cfg/projects/$CLAUDE_CODE_PROJECT_DIR_NAME/memory"
+    [ -d "$pinned" ] && mem="$pinned"
   fi
-  if [ -z "$mem" ]; then
-    base=$(git -C "$proj" rev-parse --show-toplevel 2>/dev/null) || base=""
+  if [ -z "$mem" ] && [ -z "$pinned" ]; then
     [ -n "$base" ] && base=$(normalize_path "$base")
     launch=$(normalize_path "$proj")
     for cand in "$base" "$launch"; do
@@ -107,10 +112,15 @@ scan_dir() {
 
 found=$(scan_dir "$mem" "")
 
-# Subagent memory folders (fixed layout, so deriving them is safe).
-abase=$(git -C "$proj" rev-parse --show-toplevel 2>/dev/null) || abase="$proj"
+# Subagent memory folders (fixed layout, so deriving them is safe). User
+# scope is documented as ~/.claude/agent-memory; also check the config dir
+# when it differs.
+abase="${base:-$proj}"
+ucfg="${cfg:+$cfg/agent-memory}"
+uhome="${HOME:+$HOME/.claude/agent-memory}"
+[ "$ucfg" = "$uhome" ] && ucfg=""
 agents=""
-for root in "$abase/.claude/agent-memory" "$abase/.claude/agent-memory-local" "${cfg:+$cfg/agent-memory}"; do
+for root in "$abase/.claude/agent-memory" "$abase/.claude/agent-memory-local" "$uhome" "$ucfg"; do
   [ -n "$root" ] && [ -d "$root" ] || continue
   for d in "$root"/*/; do
     [ -d "$d" ] || continue

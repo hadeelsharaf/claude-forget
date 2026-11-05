@@ -113,7 +113,7 @@ should find, start Claude Code from a subfolder of that repo, and ask: "If
 your context contains a line starting with [memory-tools], repeat it
 verbatim." Expect the three-line warning. With `claude --debug-file x.log`,
 the log line `Hooks: SessionStart:startup ... finished with status 0` confirms
-the hook ran; `status 126` means the wrapper could not be executed.
+the hook ran; `status 126` means the script could not be executed.
 
 The same script runs in GitHub Actions on Linux and macOS (`.github/workflows/ci.yml`),
 with an informational Windows git-bash job, alongside

@@ -71,8 +71,11 @@ Steps 3 to 8 once per folder, but show ONE gate: print the index health
 header once per folder, and prefix every candidate and TRIM row of an agent
 folder with `agent:<name>/`. Each folder keeps its own `.trash/TRASH.md` and
 `.claudeignore`. The report (Step 9) is repeated once per folder that had
-candidates. A project folder that does not exist is skipped silently in an
-`--agents` run; agent folders that do not exist are simply not listed.
+candidates. In an `--agents` run the stop-and-ask rule above does not
+apply: no memory path in the system prompt means "no project folder, agent
+folders only", said in one line, no question asked. A project folder that
+does not exist is skipped the same way; agent folders that do not exist are
+simply not listed.
 
 State the path you chose before you touch anything. If the directory or its
 `MEMORY.md` does not exist, report "this project has no memories" and stop.

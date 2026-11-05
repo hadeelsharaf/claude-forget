@@ -57,11 +57,18 @@ Fix release: keeps the freshness hook working with current Claude Code.
 - Hook: also runs after `compact` and on `fork`, so the stale warning
   re-enters context when memory is re-read after compaction.
 - Hook: fixed "status 126" on Linux and macOS. The hook scripts were
-  committed without the executable bit, so bash could not run the wrapper
-  and the hook never fired on those platforms. The scripts are now
-  executable in git, and the hook command runs the wrapper through `bash`
-  explicitly so it no longer depends on the bit. Verified end to end: a
-  session launched from a subfolder of a repo received the warning.
+  committed without the executable bit, so bash could not run them and the
+  hook never fired on those platforms. The script is now executable in git,
+  and the hook command runs it through `bash` explicitly so it no longer
+  depends on the bit. The polyglot `run-hook.cmd` wrapper is gone: Claude
+  Code runs hooks under Git Bash on Windows, which Claude Code requires
+  anyway. Verified end to end: a session launched from a subfolder of a
+  repo received the warning.
+- Hook: a memory folder named by `autoMemoryDirectory` or by the project
+  name override is final. If it does not exist yet, the hook stays silent
+  instead of scanning the legacy folder Claude no longer loads.
+- Hook: user-scope subagent memory is scanned under `~/.claude/agent-memory`
+  and, when `CLAUDE_CONFIG_DIR` differs, under the config dir too.
 - Tests: eight new hook cases cover every lookup path.
 - Packaging: plugin icon, keywords, repository and JSON schema; marketplace
   description, category and tags. `claude plugin validate --strict` is clean.

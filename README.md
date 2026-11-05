@@ -109,9 +109,11 @@ Code itself resolves it:
    worktrees and subfolders of one repo share one memory folder.
 4. `<config dir>/projects/<slug of the launch folder>/memory` (older layout).
 
-`<config dir>` is `CLAUDE_CONFIG_DIR`, else `~/.claude`. If Claude Code ever
-changes its folder naming again, the hook finds nothing and stays silent;
-/checkup itself still works.
+`<config dir>` is `CLAUDE_CONFIG_DIR`, else `~/.claude`. A folder named by a
+setting or the name override is final: if it does not exist yet, the hook is
+silent. If Claude Code ever changes its folder naming again, the hook finds
+nothing and stays silent; /checkup itself still works. The hook runs under
+bash (Git Bash on Windows, which Claude Code needs anyway).
 
 A note on the index: Claude Code loads only the first 200 lines or 25 KB of
 `MEMORY.md` at session start. Entries past that point never load. Keep the

@@ -6,7 +6,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "bash \"${CLAUDE_PLUGIN_ROOT}/hooks/run-hook.cmd\" check-stale",
+            "command": "bash \"${CLAUDE_PLUGIN_ROOT}/hooks/check-stale\"",
             "shell": "bash",
             "async": false
           }
