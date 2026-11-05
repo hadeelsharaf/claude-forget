@@ -108,7 +108,13 @@ missing folder is ignored, `CLAUDE_CONFIG_DIR` replaces `~/.claude`,
 `CLAUDE_CODE_PROJECT_DIR_NAME` beside `CLAUDE_CONFIG_DIR` names the folder,
 and that same variable without `CLAUDE_CONFIG_DIR` is ignored.
 
-Live check (any OS): plant an overdue file in the memory folder the hook
+Live check, scripted: `sh tests/live-hook-check.sh` updates the plugin, asks a
+real session where its memory folder is, plants one overdue note there, starts
+a session from a repo subfolder and checks the warning and the hook status.
+Use `--no-update` to skip the update, and `MEMORY_DIR=<folder>` when sessions
+state no memory path.
+
+Live check by hand (any OS): plant an overdue file in the memory folder the hook
 should find, start Claude Code from a subfolder of that repo, and ask: "If
 your context contains a line starting with [memory-tools], repeat it
 verbatim." Expect the three-line warning. With `claude --debug-file x.log`,
