@@ -3,7 +3,9 @@
 Short, decision-first plans for the next releases. Older entries move to
 `CHANGELOG.md` once shipped.
 
-## v0.4.0 - restore, index health, subagent memory
+## v0.4.0 - restore, index health, subagent memory (shipped 2026-11-05)
+
+See `CHANGELOG.md` for what landed. Design notes kept below for reference.
 
 Goal: close the three gaps found in the Nov 2026 review. Every change keeps
 the plugin's rule: nothing is ever deleted, everything can be undone.
@@ -16,7 +18,7 @@ Decisions already taken:
   gate says "inside the repository: changes will show in git status".
 - Plugin evals (`claude plugin eval`) stay local. No eval job in CI.
 
-### Phase 1 - manifest v2 and /restore (in progress on the dev branch)
+### Phase 1 - manifest v2 and /restore (done)
 
 Why first: the other two phases add edits, and edits are only safe when the
 undo path is real. Today the restore recipe is manual.
@@ -58,7 +60,7 @@ Tests: extend `tests/TESTING.md` with Part 4: run /forget on the fixture,
 then /restore, then compare hashes to the baseline (11/11 must match). Same
 for /checkup then /restore. Local eval case `evals/restore-round-trip`.
 
-### Phase 2 - /checkup index health (in progress on the dev branch)
+### Phase 2 - /checkup index health (done)
 
 - New header block at the gate, before the candidate table:
   `MEMORY.md: N lines, M KB (limit 200 lines / 25 KB)`, plus `orphan files:
@@ -78,7 +80,7 @@ Tests: generated fixture (`tests/make-index-fixture.sh`) with 210 index
 lines, four dangling lines and two orphans; expected header numbers and TRIM
 rows documented in `TESTING.md` Part 3b.
 
-### Phase 3 - subagent memory (in progress on the dev branch)
+### Phase 3 - subagent memory (done)
 
 Folders Claude Code uses (one `MEMORY.md` plus topic files each):
 
@@ -114,7 +116,7 @@ Tests: fixture `tests/fixture-agent-memory/reviewer/`; hook cases for an
 agent folder under the git root and under `$HOME`; forget and checkup
 round trips with `--agent reviewer`.
 
-### Phase 4 - frontmatter, docs, local evals
+### Phase 4 - frontmatter, docs, local evals (done; `arguments` skipped, see CHANGELOG)
 
 - SKILL.md: add `when_to_use` (move the long trigger text there, keep
   `description` to one line), `arguments` (named args such as `concern`,
@@ -147,6 +149,15 @@ Release when phases 1 to 3 pass their round trips and the hook test; phase
 - Manifest v2 anchors use line numbers. A context line (the line above the
   removed block) would survive unrelated edits better. Line numbers are
   simpler to write and verify; start there.
+
+## v0.4.x candidates
+
+- Lifecycle diagram (`assets/lifecycle.png`) gains the /restore stage.
+- `/checkup`: a MERGE action that folds several index lines into one. Writes
+  new text, so it needs its own manifest block and a careful gate.
+- Firmer `.claudeignore` wording: one agent-folder run skipped creating it.
+- Hook test on Windows CI promoted from informational to blocking once a
+  run has been seen green.
 
 ## Later (v0.5.0 candidates)
 

@@ -3,6 +3,12 @@
 Run the relevant part after every edit to `skills/*/SKILL.md` or `hooks/`.
 Parts 1 and 3 each end in a manifest; Part 4 restores it with /restore.
 
+## Evals (local only)
+
+`evals/` holds a `claude plugin eval` suite that automates the gates of
+Parts 1, 3 and 3b (read-only) and the apply steps of Parts 1 and 4 (needs
+tool grants and a sandbox backend). See `evals/README.md` for the commands.
+
 ## Part 1 — /forget round trip
 
 ### Setup

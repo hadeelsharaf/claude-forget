@@ -8,8 +8,9 @@
 # All topic files are references (not perishable), so the stamp and judgment
 # passes find nothing and only the index section is offered at the gate.
 set -e
+# Optional first argument: target directory (used by the eval scaffold).
 root=$(cd "$(dirname "$0")/.." && pwd)
-dir="$root/tests/scratch/memory-index-full"
+dir="${1:-$root/tests/scratch/memory-index-full}"
 rm -rf "$dir"; mkdir -p "$dir"
 i=1
 while [ "$i" -le 206 ]; do

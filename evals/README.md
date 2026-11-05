@@ -1,0 +1,19 @@
+# Local eval suite
+
+Run with `claude plugin eval`; results land in `evals/results/` (gitignored).
+Evals stay local by design (no CI job).
+
+Read-only gate cases (no tool grants needed):
+
+    claude plugin eval . --scaffold --trust-plugin --tag gate --ablation none
+
+Apply cases need write tools and a sandbox backend (Linux: bubblewrap + socat;
+Windows: run under WSL2):
+
+    claude plugin eval . --scaffold --trust-plugin --tag apply --ablation none \
+      --allow-tools Write Edit "Bash(mv *)" "Bash(mkdir *)" "Bash(grep *)" \
+      "Bash(date *)" "Bash(ls *)" "Bash(nl *)" "Bash(wc *)" "Bash(cat *)" "Bash(sed -n *)"
+
+`--scaffold` runs each case's `fixture.sh` (copies `tests/fixture-memory-baseline`
+or generates the index fixture); only pass it for suites you trust, this one is
+in-repo. Use `--runs 1` while iterating; the default is 3 runs per case.

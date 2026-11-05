@@ -1,9 +1,11 @@
 ---
 name: recall
-description: Load the minimum memory about one named item, read-only - list matching index entries first, then open exactly one topic file the user names. With --agent <name> it searches that subagent's memory folder; with --agents, the project folder plus every subagent folder. Use ONLY when the user explicitly asks to recall / look up / load memories about a named item (or invokes /recall). NOT for general questions, NOT for forgetting memories (that is /forget), NOT for reviewing stale memories (that is /checkup).
+description: Read-only pull of the minimum memory about one named item: lists matching index entries (with word counts and STALE tags), then opens exactly one topic file the user names. --agent <name> or --agents searches subagent memory too.
+when_to_use: Use ONLY when the user explicitly asks to recall, look up, or load memories about a named item, or invokes /recall. NOT for general questions, NOT for forgetting memories (that is /forget), NOT for reviewing stale memories (that is /checkup).
 argument-hint: [--agent <name> | --agents] <item to recall>
 disable-model-invocation: true
 allowed-tools: Read, Glob, Grep, Bash
+compatibility: Tested on Claude Code 2.1.318. Needs plugin skills, SessionStart hooks, and a bash on PATH (Git Bash on Windows).
 ---
 
 # /recall - pull the minimum memory about one item

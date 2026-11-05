@@ -6,6 +6,19 @@ Memory lifecycle for Claude Code auto-memory: /forget buries what you discard, /
 
 ![Diagram of the memory lifecycle. Four stages in order: /fresh starts at zero with a memory quarantine; /recall pulls the minimum back, read-only, opening exactly one topic file; /checkup reviews past-due review-after stamps and stale status notes; /forget retires finished work by moving files to .trash with a restore manifest. Footer: every step is reversible — no memory file is ever deleted, every cut line is copied verbatim into .trash/TRASH.md before the cut.](assets/lifecycle.png)
 
+## Which door when?
+
+| You want to... | Run | Writes anything? |
+|---|---|---|
+| Work on a task as if the project had no memory | `/fresh [task]` | No |
+| Look up one thing from memory, nothing more | `/recall <item>` | No |
+| Find notes that went stale, fix the index | `/checkup [topic]` | Yes, with one confirm, all undoable |
+| Retire a discarded effort | `/forget <concern>` | Yes, with one confirm, all undoable |
+| Undo a /forget or /checkup run | `/restore [entry]` | Yes, from the manifest only |
+
+Add `--agent <name>` (or `--agents` for /checkup and /recall) to work on a
+subagent's memory folder instead of the project's.
+
 ## Skills
 
 ### /forget <concern>
@@ -196,9 +209,11 @@ For local testing from a clone:
 ## Testing
 
 See `tests/TESTING.md` for the fixture round-trip procedures (forget,
-checkup, fresh, recall, and the scripted hook test `tests/run-hook-test.sh`).
-GitHub Actions runs the hook test and `claude plugin validate . --strict` on
-every push. Plugin evals (`claude plugin eval`) are run locally only.
+checkup, restore, subagent memory, fresh, recall, and the scripted hook test
+`tests/run-hook-test.sh`). GitHub Actions runs the hook test and
+`claude plugin validate . --strict` on every push. A local eval suite lives
+in `evals/` (see `evals/README.md`): three read-only gate cases and two apply
+cases for `claude plugin eval`. Evals are run locally only.
 
 See `CHANGELOG.md` for what changed in each version, and `ROADMAP.md` for
 what is planned next (v0.4.0: /restore, index health in /checkup, subagent

@@ -1,9 +1,11 @@
 ---
 name: forget
-description: Use ONLY when the user explicitly asks to forget, trash, or drop memories about a named topic or discarded effort (for example "/forget <concern>", "forget the X effort", "trash my memories about X"). Moves matching auto-memory files of the CURRENT project to memory/.trash/ (reversible, never deletes), records a manifest holding a verbatim copy of anything cut, and re-indexes MEMORY.md. With --agent <name> it works on that subagent's memory folder instead. Do NOT use for casual mentions of forgetting, "I forgot to...", questions about what is in memory, editing CLAUDE.md, or clearing MCP memory stores or transcripts.
+description: Reversibly trash the current project's auto-memories about a discarded effort: moves whole-match files to memory/.trash/, cuts only matching lines elsewhere, records everything verbatim in a manifest, re-indexes MEMORY.md. --agent <name> works on a subagent's memory folder.
+when_to_use: Use ONLY when the user explicitly asks to forget, trash, or drop memories about a named topic or discarded effort ("/forget <concern>", "forget the X effort", "trash my memories about X"). Do NOT use for casual mentions of forgetting, "I forgot to...", questions about what is in memory (that is /recall), editing CLAUDE.md, or clearing MCP memory stores or transcripts.
 argument-hint: [--agent <name>] <concern to forget>
 disable-model-invocation: true
 allowed-tools: Read, Write, Edit, Glob, Grep, Bash
+compatibility: Tested on Claude Code 2.1.318. Needs plugin skills, SessionStart hooks, and a bash on PATH (Git Bash on Windows).
 ---
 
 # Forget — trash memories about a discarded effort

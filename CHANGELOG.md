@@ -3,7 +3,18 @@
 All notable changes to the memory-tools plugin. Users only receive an update
 when the `version` in `.claude-plugin/plugin.json` changes.
 
-## Unreleased (0.4.0)
+## 0.4.0 - 2026-11-05
+
+Feature release: restore, index health, subagent memory. Every change keeps
+the rule that nothing is ever deleted and everything can be undone.
+
+- Skills: `when_to_use` carries the trigger text so descriptions stay short;
+  `compatibility` states the tested Claude Code version. (`arguments` was
+  not adopted: the `--agent` prefix would break named positional args.)
+- Local eval suite in `evals/` for `claude plugin eval`: gate cases for
+  forget, checkup and index health (read-only), apply cases for forget and
+  restore (need tool grants and a sandbox backend). Evals stay local.
+- Banner lists /restore.
 
 - /restore: new skill that undoes one /forget or /checkup entry from the
   manifest: lists open entries, dry run, one confirm, marks the entry

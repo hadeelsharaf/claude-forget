@@ -1,9 +1,11 @@
 ---
 name: restore
-description: Use ONLY when the user explicitly asks to restore, undo, or bring back memories that /forget or /checkup changed (for example "/restore", "/restore <entry>", "undo the last forget", "bring back the widget exporter memories"). Reads memory/.trash/TRASH.md, lists undo entries, and applies exactly one entry the user picks, after one confirm. With --agent <name> it restores from that subagent's memory folder. Never deletes anything. Do NOT use for git restore, file recovery outside the memory folder, casual "restore" phrasing, or questions about what is in memory (that is /recall).
+description: Undo one /forget or /checkup entry from memory/.trash/TRASH.md: lists open entries, dry run, one confirm, then moves files back and pastes verbatim blocks at their line anchors. Never deletes anything. --agent <name> restores a subagent's folder.
+when_to_use: Use ONLY when the user explicitly asks to restore, undo, or bring back memories that /forget or /checkup changed ("/restore", "/restore <entry>", "undo the last forget", "bring back the widget exporter memories"). Do NOT use for git restore, file recovery outside the memory folder, casual "restore" phrasing, or questions about what is in memory (that is /recall).
 argument-hint: [--agent <name>] [entry date or concern to restore]
 disable-model-invocation: true
 allowed-tools: Read, Write, Edit, Glob, Grep, Bash
+compatibility: Tested on Claude Code 2.1.318. Needs plugin skills, SessionStart hooks, and a bash on PATH (Git Bash on Windows).
 ---
 
 # Restore — undo one /forget or /checkup entry

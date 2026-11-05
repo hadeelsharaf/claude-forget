@@ -1,9 +1,11 @@
 ---
 name: checkup
-description: Use ONLY when the user explicitly asks to review stale or outdated memories (for example "/checkup", "/checkup <topic>", "run a memory checkup", "which memories went stale?"). Sweeps the CURRENT project's auto-memory folder for status notes past their review-after stamp and for unstamped notes that read like a current status, then applies user-approved fixes (refresh, mark historical, stamp, trim an index line, or hand off to /forget). With --agent <name> it sweeps that subagent's memory folder; with --agents, the project folder plus every subagent folder. Do NOT use for casual mentions of checking up, medical or code health checks, questions about what is in memory, editing CLAUDE.md, or MCP memory stores and transcripts.
+description: Find auto-memories that went stale and fix them with one confirm: overdue or malformed review-after stamps, unstamped status notes, plus MEMORY.md index health (load limit, orphans, dangling lines). Actions: refresh, historical, stamp, trim, forget handoff. --agent <name> or --agents for subagent memory.
+when_to_use: Use ONLY when the user explicitly asks to review stale or outdated memories ("/checkup", "/checkup <topic>", "run a memory checkup", "which memories went stale?", "is my memory index too long?"). Do NOT use for casual mentions of checking up, medical or code health checks, questions about what is in memory (that is /recall), editing CLAUDE.md, or MCP memory stores and transcripts.
 argument-hint: [--agent <name> | --agents] [optional topic to narrow]
 disable-model-invocation: true
 allowed-tools: Read, Write, Edit, Glob, Grep, Bash
+compatibility: Tested on Claude Code 2.1.318. Needs plugin skills, SessionStart hooks, and a bash on PATH (Git Bash on Windows).
 ---
 
 # Checkup — find and fix stale status memories

@@ -1,8 +1,10 @@
 ---
 name: fresh
-description: Start working memory-free in this session - an instruction-based quarantine of auto-memory. Use ONLY when the user explicitly invokes /fresh or asks to work without memories / with a clean slate on a task. NOT for casual "fresh start" phrasing about redoing work, NOT for clearing or deleting memory (that is /forget), NOT for reviewing stale memories (that is /checkup).
+description: Work memory-free for the rest of the session: an instruction-level quarantine of auto-memory (no citing, reading, or writing memory; subagents told the same). Two doors back: /recall <item> and "end fresh mode".
+when_to_use: Use ONLY when the user explicitly invokes /fresh or asks to work without memories / with a clean slate on a task. NOT for casual "fresh start" phrasing about redoing work, NOT for clearing or deleting memory (that is /forget), NOT for reviewing stale memories (that is /checkup).
 argument-hint: [task to work on memory-free]
 disable-model-invocation: true
+compatibility: Tested on Claude Code 2.1.318. Needs plugin skills, SessionStart hooks, and a bash on PATH (Git Bash on Windows).
 ---
 
 # /fresh - work memory-free in this session
