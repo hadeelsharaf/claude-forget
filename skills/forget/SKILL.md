@@ -86,6 +86,10 @@ note the mismatch — you will fix it during Step 8.
 Tag every candidate:
 - FULL — the entire file is about the discarded effort.
 - PARTIAL — the file mixes the effort with unrelated facts that must survive.
+  Any line that names the effort (its name, ticket, branch, or tool) makes
+  its file a PARTIAL candidate even when the file's subject is something
+  else; list the line and let the user decide at the gate. Do not silently
+  drop a mention because you judge it incidental.
 
 ## Step 5 — Confirm gate (mandatory, exactly one)
 

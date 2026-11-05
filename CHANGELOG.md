@@ -11,6 +11,9 @@ the rule that nothing is ever deleted and everything can be undone.
 - Skills: `when_to_use` carries the trigger text so descriptions stay short;
   `compatibility` states the tested Claude Code version. (`arguments` was
   not adopted: the `--agent` prefix would break named positional args.)
+- /forget: a line that names the effort always makes its file a PARTIAL
+  candidate; the user decides at the gate (one eval run had dropped such a
+  line as incidental).
 - Local eval suite in `evals/` for `claude plugin eval`: gate cases for
   forget, checkup and index health (read-only), apply cases for forget and
   restore (need tool grants and a sandbox backend). Evals stay local.
