@@ -13,8 +13,8 @@ render() {
   rm "$1.raw.png"
 }
 render banner 300
-render lifecycle 940
-render forget-flow 960
+render lifecycle 1100
+render forget-flow 940
 
 # Plugin icon: square 1024px PNG (the marketplace accepts 512-2048px PNG/JPEG).
 "$CHROME" --headless=new --no-sandbox --disable-gpu --hide-scrollbars \

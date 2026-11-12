@@ -18,7 +18,7 @@
 </style>
 <body>
   <h1>The memory lifecycle</h1>
-  <div class="sub">Four skills that cover an auto-memory's whole life — from a clean slate to a reversible retirement</div>
+  <div class="sub">Five skills that cover an auto-memory's whole life — from a clean slate to a retirement you can undo</div>
   <div class="flow">
     <div class="stage">
       <div class="head"><span class="cmd">/fresh</span><span class="role">Start at zero</span></div>
@@ -32,12 +32,17 @@
     <div class="arrow">&#8595;</div>
     <div class="stage">
       <div class="head"><span class="cmd">/checkup</span><span class="role">Review what went stale</span></div>
-      <div class="desc">Sweeps past-due <code>review-after</code> stamps and status-like notes; you pick per file: refresh, mark historical, stamp, forget, or skip.</div>
+      <div class="desc">Sweeps past-due <code>review-after</code> stamps, status-like notes and the health of the <code>MEMORY.md</code> index; you pick per item: refresh, mark historical, stamp, trim, forget, or skip.</div>
     </div>
     <div class="arrow">&#8595;</div>
     <div class="stage">
       <div class="head"><span class="cmd">/forget</span><span class="role">Retire what is finished</span></div>
       <div class="desc">Moves whole-match files to <code>.trash/</code>, cuts matching lines from the rest, and records everything in a manifest with a restore recipe.</div>
+    </div>
+    <div class="arrow">&#8595;</div>
+    <div class="stage">
+      <div class="head"><span class="cmd">/restore</span><span class="role">Undo any of it</span></div>
+      <div class="desc">Picks one <code>/forget</code> or <code>/checkup</code> entry from the manifest, shows a dry run, then moves files back and pastes every cut line where it was.</div>
     </div>
   </div>
   <div class="foot">Every destructive-looking step is reversible: no memory file is ever deleted, and every cut line is copied verbatim into <b>.trash/TRASH.md</b> before the cut.</div>
