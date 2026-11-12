@@ -10,9 +10,15 @@
 #                                        generated file is out of date
 #
 # Edit src/, never the generated files: forget, restore and checkup.
+# Line endings are ignored when comparing, so a CRLF checkout (Windows) is
+# not reported as out of date.
 set -e
 root=$(cd "$(dirname "$0")/.." && pwd)
 mode="${1:-write}"
+case "$mode" in
+  write|--check) ;;
+  *) echo "usage: build-skills.sh [--check]" >&2; exit 2 ;;
+esac
 tmp="$root/tests/scratch/build-skills.tmp"
 mkdir -p "$root/tests/scratch"
 stale=0
@@ -20,7 +26,8 @@ stale=0
 render() {
   awk -v dir="$root/src/shared" '
     /^@include [a-z0-9-]+[[:space:]]*$/ {
-      f = dir "/" $2 ".md"; n = 0
+      name = $2; sub(/\r$/, "", name)
+      f = dir "/" name ".md"; n = 0
       while ((getline line < f) > 0) { print line; n++ }
       close(f)
       if (n == 0) { printf "build-skills: missing or empty partial %s\n", f > "/dev/stderr"; bad = 1 }
@@ -34,8 +41,10 @@ for tpl in "$root"/src/skills/*.md; do
   name=$(basename "$tpl" .md)
   out="$root/skills/$name/SKILL.md"
   render "$tpl" > "$tmp"
-  if [ -f "$out" ] && cmp -s "$tmp" "$out"; then
-    continue
+  if [ -f "$out" ]; then
+    tr -d '\r' < "$tmp" > "$tmp.new"
+    tr -d '\r' < "$out" > "$tmp.cur"
+    if cmp -s "$tmp.new" "$tmp.cur"; then continue; fi
   fi
   if [ "$mode" = "--check" ]; then
     echo "STALE: skills/$name/SKILL.md differs from src/skills/$name.md + src/shared/"
@@ -46,7 +55,7 @@ for tpl in "$root"/src/skills/*.md; do
     echo "built skills/$name/SKILL.md"
   fi
 done
-rm -f "$tmp"
+rm -f "$tmp" "$tmp.new" "$tmp.cur"
 
 if [ "$stale" -ne 0 ]; then
   echo "Edit src/skills/ or src/shared/, then run: sh scripts/build-skills.sh"

@@ -251,5 +251,13 @@ out=$(HOME="$scratch" CLAUDE_PROJECT_DIR="$scratch/repo/sub" sh "$root/hooks/che
 check "project-only overdue keeps the plain trailer" "$(warn_for root_status.md)" "$out"
 check "exit 0 (plain trailer)" "0" "$rc"
 
+# Case 22: a partial install without scripts/memory-scan -> silent, exit 0
+# (the stamp rules live in that script; the hook must never fail a session).
+mkdir -p "$scratch/partial/hooks"
+cp "$root/hooks/check-stale" "$scratch/partial/hooks/"
+out=$(HOME="$scratch" CLAUDE_PROJECT_DIR="$scratch/repo/sub" sh "$scratch/partial/hooks/check-stale" 2>&1); rc=$?
+check "missing scanner silent" "" "$out"
+check "exit 0 (missing scanner)" "0" "$rc"
+
 if [ "$fail" -eq 0 ]; then echo "ALL PASS"; else echo "FAILURES ABOVE"; fi
 exit "$fail"

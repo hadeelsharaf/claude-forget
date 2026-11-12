@@ -34,8 +34,6 @@ jobs:
       - name: Run the scanner test under git-bash
         shell: bash
         run: sh tests/run-scan-test.sh
-      - name: Run the scanner test and the generated-skills check
-        run: sh tests/run-scan-test.sh
 
   validate:
     name: plugin validate --strict

@@ -13,6 +13,7 @@ checkup cases take the skill's by-hand fallback (`scripts/memory-scan`
 cannot run). To test the scanner path, grant Bash; this needs the sandbox
 backend described below:
 
+    mkdir -p "$HOME/evaltmp"
     TMPDIR="$HOME/evaltmp" claude plugin eval . --scaffold --trust-plugin \
       --case 'checkup-*' --ablation none --allow-tools Bash
 
@@ -51,7 +52,7 @@ each and the scanner runs in every trace. forget-gate 3/3 (one earlier run
 scored 0.80 on a split `gate-shape` judge vote; skill text unchanged).
 forget-apply and restore-apply 2/2 with every grader green. Without Bash
 (by-hand fallback) checkup-gate passes; checkup-index-gate is unreliable:
-hand counting 208 files missed the orphans in 2 of 7 runs. Use the Bash
+hand counting 208 files missed the orphans in 2 of 6 runs. Use the Bash
 command above for that case.
 
 Observed behaviour when writes are blocked (useful when reading a partial
