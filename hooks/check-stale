@@ -92,22 +92,17 @@ fi
 
 # --- scan ------------------------------------------------------------------
 
-today=$(date +%Y-%m-%d) || exit 0
+# The stamp rules live in scripts/memory-scan (shared with /checkup).
+scan="$(cd "$(dirname "$0")/.." 2>/dev/null && pwd)/scripts/memory-scan"
+[ -f "$scan" ] || exit 0
 
 # scan_dir <dir> <label>: print one "- <label><file> (review-after <d>)" line
 # per overdue stamp in <dir>/*.md (never .trash/). Empty <label> for the
 # project folder; "<name> (agent): " for an agent folder.
 scan_dir() {
   [ -d "$1" ] || return 0
-  awk -v today="$today" -v label="$2" '
-    FNR==1 { fm=0; done=0; if ($0 !~ /^---/) done=1 }
-    done { next }
-    { sub(/\r$/,"") }
-    /^---[[:space:]]*$/ { fm++; if (fm>=2) done=1; next }
-    fm==1 && /^review-after:[[:space:]]*[0-9][0-9][0-9][0-9]-[0-9][0-9]-[0-9][0-9][[:space:]]*$/ {
-      d=$2; done=1
-      if (d < today) { n=split(FILENAME,p,"/"); printf "- %s%s (review-after %s)\n", label, p[n], d }
-    }' "$1"/*.md 2>/dev/null
+  sh "$scan" stamps "$1" 2>/dev/null | awk -F '\t' -v label="$2" '
+    $1 == "OVERDUE" { printf "- %s%s (review-after %s)\n", label, $2, $3 }'
 }
 
 found=$(scan_dir "$mem" "")

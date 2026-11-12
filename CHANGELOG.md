@@ -3,6 +3,24 @@
 All notable changes to the memory-tools plugin. Users only receive an update
 when the `version` in `.claude-plugin/plugin.json` changes.
 
+## Unreleased
+
+Internal structure; no change to what /forget does, small changes to
+/checkup and /restore wording.
+
+- Shared skill text has one source: `src/shared/` holds the Locate step,
+  the manifest header and the manifest rules; `src/skills/` holds the
+  templates for /forget, /restore and /checkup. `sh scripts/build-skills.sh`
+  writes `skills/*/SKILL.md`; CI fails when they are out of date. /fresh and
+  /recall stay hand-written.
+- New read-only `scripts/memory-scan` (`stamps`, `index`): the freshness
+  hook and /checkup now read stamps with the same code, and /checkup takes
+  its index numbers (lines, bytes, dangling lines, orphans) from the script
+  instead of counting by hand. Hand counting stays as the fallback.
+- /restore: the Scope line now names `--agent` folders, as the steps
+  already did.
+- New `tests/run-scan-test.sh`, run in CI beside the hook test.
+
 ## 0.4.0 - 2026-11-05
 
 Feature release: restore, index health, subagent memory. Every change keeps

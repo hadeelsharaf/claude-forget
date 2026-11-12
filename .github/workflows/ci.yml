@@ -17,6 +17,8 @@ jobs:
       - uses: actions/checkout@v4
       - name: Run the scripted hook test
         run: sh tests/run-hook-test.sh
+      - name: Run the scanner test and the generated-skills check
+        run: sh tests/run-scan-test.sh
 
   # Informational: exercises the git-bash path used on Windows. Not yet
   # verified on a Windows runner, so a failure does not block the build.
@@ -29,6 +31,11 @@ jobs:
       - name: Run the scripted hook test under git-bash
         shell: bash
         run: sh tests/run-hook-test.sh
+      - name: Run the scanner test under git-bash
+        shell: bash
+        run: sh tests/run-scan-test.sh
+      - name: Run the scanner test and the generated-skills check
+        run: sh tests/run-scan-test.sh
 
   validate:
     name: plugin validate --strict

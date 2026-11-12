@@ -19,7 +19,8 @@ You never delete a file, never delete a manifest entry, and never touch a
 file the entry does not name. Follow every numbered step in order; the
 confirm gate in Step 5 may not be skipped for any reason.
 
-Scope: the CURRENT project's auto-memory folder ONLY, and inside it only
+Scope: the selected memory folder ONLY — the CURRENT project's auto-memory
+folder, or one subagent's folder with `--agent` — and inside it only
 `memory/.trash/TRASH.md`, the `.trashed` files it names, and the memory files
 it names.
 
