@@ -7,9 +7,11 @@ Read-only gate cases (no tool grants needed):
 
     claude plugin eval . --scaffold --trust-plugin --tag gate --ablation none
 
-Without a Bash grant the checkup cases take the skill's by-hand fallback
-(`scripts/memory-scan` cannot run). To test the scanner path, grant Bash;
-this needs the sandbox backend described below:
+Bash is an operator-gated tool: a case's own `allowed_tools` cannot grant
+it, only `--allow-tools` on the command line can. So without that flag the
+checkup cases take the skill's by-hand fallback (`scripts/memory-scan`
+cannot run). To test the scanner path, grant Bash; this needs the sandbox
+backend described below:
 
     TMPDIR="$HOME/evaltmp" claude plugin eval . --scaffold --trust-plugin \
       --case 'checkup-*' --ablation none --allow-tools Bash
@@ -43,12 +45,14 @@ the baseline fixture byte for byte. The apply prompts pre-approve the confirm
 gate in the same message; in every run the model showed the gate and went on
 in the same turn, so no recorded gate turn is needed.
 
-Status 2026-11-12 (after /checkup moved to `scripts/memory-scan`): with
-Bash granted, checkup-gate and checkup-index-gate pass 2/2 each and the
-scanner runs in every trace. Without Bash (by-hand fallback) checkup-gate
-passes 2/2; checkup-index-gate passed 3 of 4 runs, the miss being a
-hand-counted orphan line. forget-gate (skill text unchanged) scored 0.80 in
-one run on a split `gate-shape` judge vote. Apply cases not re-run.
+Status 2026-11-12 (after /checkup moved to `scripts/memory-scan`): all five
+cases pass. With Bash granted, checkup-gate and checkup-index-gate pass 3/3
+each and the scanner runs in every trace. forget-gate 3/3 (one earlier run
+scored 0.80 on a split `gate-shape` judge vote; skill text unchanged).
+forget-apply and restore-apply 2/2 with every grader green. Without Bash
+(by-hand fallback) checkup-gate passes; checkup-index-gate is unreliable:
+hand counting 208 files missed the orphans in 2 of 7 runs. Use the Bash
+command above for that case.
 
 Observed behaviour when writes are blocked (useful when reading a partial
 score): /forget applies nothing rather than leave MEMORY.md pointing at files

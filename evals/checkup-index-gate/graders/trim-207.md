@@ -1,4 +1,4 @@
 ---
 type: regex
-pattern: '207[^\n]{0,80}TRIM|TRIM[^\n]{0,80}207'
+pattern: '207[^\n]{0,200}TRIM|TRIM[^\n]{0,200}207'
 ---
