@@ -3,7 +3,7 @@
 All notable changes to the memory-tools plugin. Users only receive an update
 when the `version` in `.claude-plugin/plugin.json` changes.
 
-## Unreleased
+## 0.4.1 - 2026-11-12
 
 Internal structure; no change to what /forget does, small changes to
 /checkup and /restore wording.
@@ -19,6 +19,12 @@ Internal structure; no change to what /forget does, small changes to
   instead of counting by hand. Hand counting stays as the fallback.
 - /restore: the Scope line now names `--agent` folders, as the steps
   already did.
+- Scanner details: an empty topic file counts as existing; a link to
+  `MEMORY.md` itself is ignored; links with a title or in `<angle brackets>`
+  resolve; when a file carries a malformed and a well-formed `review-after`
+  line, the well-formed one is used.
+- `build-skills.sh --check` and the tests ignore line endings, so a Windows
+  (CRLF) checkout passes.
 - New `tests/run-scan-test.sh`, run in CI beside the hook test.
 
 ## 0.4.0 - 2026-11-05
