@@ -90,24 +90,39 @@ content. Never list it, never grep it, never offer it as a candidate. Every
 
 Get today's date with `date +%Y-%m-%d` (Bash tool) — never assume it.
 
-Measure the index (deterministic, Bash tool):
-- lines: `wc -l < MEMORY.md`; bytes: `wc -c < MEMORY.md`. Claude Code loads
-  only the first 200 lines or 25 KB (25,600 bytes) of `MEMORY.md`, whichever
-  comes first; everything after that never loads. Note the first line that
-  would not load, if any.
-- dangling lines: index lines whose `(file.md)` or `[[slug]]` target does
-  not exist in the folder. Record each with its line number.
-- orphan files: topic `*.md` files (not MEMORY.md, not under `.trash/`) that
-  no index line points to.
+Measure the index with the plugin's read-only scanner (Bash tool):
+
+    sh "${CLAUDE_PLUGIN_ROOT}/scripts/memory-scan" index "<memory directory>"
+
+Copy its numbers into the Step 5 header; never estimate them:
+- `index:` — lines and bytes of `MEMORY.md`. Claude Code loads only the
+  first 200 lines or 25 KB (25,600 bytes) of `MEMORY.md`, whichever comes
+  first; everything after that never loads.
+- `status:` — OK, NEAR LIMIT (80% or more of either limit) or OVER LIMIT;
+  when over, `never-load: lines <first> to <N>` names the lines that never
+  load.
+- `dangling-line: <N> -> <target>` — an index line whose `(file.md)` or
+  `[[slug]]` target does not exist in the folder.
+- `orphan: <file>` — a topic `*.md` file (not MEMORY.md, not under
+  `.trash/`) that no index line points to.
+
+If the scanner cannot be run (no shell, script not found), measure the same
+four things by hand (`wc -l`, `wc -c` and `grep -n`, or the Read and Grep
+tools) and add one line directly under the Step 5 header: "(index numbers
+measured by hand)". The header lines themselves keep their exact shape.
 
 ## Step 4 — Sweep (two passes, in order)
 
-1. Stamp pass (deterministic): grep all topic files for `^review-after:`
-   INSIDE the frontmatter block (between the opening and closing `---`);
-   matches in the body are documentation, not stamps. A well-formed date
-   earlier than today tags the file OVERDUE. A malformed value tags it
-   BADSTAMP (recommended action: STAMP with a corrected date).
-2. Judgment pass: for unstamped files, read the title, MEMORY.md hook line,
+1. Stamp pass (deterministic): run
+   `sh "${CLAUDE_PLUGIN_ROOT}/scripts/memory-scan" stamps "<memory directory>"`.
+   It reads `review-after:` only INSIDE the frontmatter block (between the
+   opening and closing `---`); matches in the body are documentation, not
+   stamps. It prints one tag per topic file: OVERDUE (a well-formed date
+   earlier than today), BADSTAMP (a malformed value; recommended action:
+   STAMP with a corrected date), STAMPED (not due, not a candidate) and
+   UNSTAMPED (goes to the judgment pass). If the scanner cannot be run,
+   apply the same rules by hand with grep.
+2. Judgment pass: for UNSTAMPED files, read the title, MEMORY.md hook line,
    and headings. A note written as a CURRENT state — open bugs, current
    status, active work, a checkpoint, in-progress work, a dated status log —
    is UNSTAMPED-PERISHABLE. Lessons (`feedback` type), user facts,

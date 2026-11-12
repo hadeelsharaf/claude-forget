@@ -212,10 +212,16 @@ For local testing from a clone:
 
 See `tests/TESTING.md` for the fixture round-trip procedures (forget,
 checkup, restore, subagent memory, fresh, recall, and the scripted hook test
-`tests/run-hook-test.sh`). GitHub Actions runs the hook test and
-`claude plugin validate . --strict` on every push. A local eval suite lives
+`tests/run-hook-test.sh`). GitHub Actions runs the hook test, the scanner
+test (`tests/run-scan-test.sh`) and `claude plugin validate . --strict` on
+every push. A local eval suite lives
 in `evals/` (see `evals/README.md`): three read-only gate cases and two apply
 cases for `claude plugin eval`. Evals are run locally only.
+
+Editing skills: /forget, /restore and /checkup are generated from
+`src/skills/` and `src/shared/` (text they share). Edit there, then run
+`sh scripts/build-skills.sh`. The deterministic checks (stamps, index
+health) live in `scripts/memory-scan`, used by both the hook and /checkup.
 
 See `CHANGELOG.md` for what changed in each version, and `ROADMAP.md` for
 what is planned next (v0.4.0: /restore, index health in /checkup, subagent

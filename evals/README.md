@@ -7,6 +7,16 @@ Read-only gate cases (no tool grants needed):
 
     claude plugin eval . --scaffold --trust-plugin --tag gate --ablation none
 
+Bash is an operator-gated tool: a case's own `allowed_tools` cannot grant
+it, only `--allow-tools` on the command line can. So without that flag the
+checkup cases take the skill's by-hand fallback (`scripts/memory-scan`
+cannot run). To test the scanner path, grant Bash; this needs the sandbox
+backend described below:
+
+    mkdir -p "$HOME/evaltmp"
+    TMPDIR="$HOME/evaltmp" claude plugin eval . --scaffold --trust-plugin \
+      --case 'checkup-*' --ablation none --allow-tools Bash
+
 Apply cases need write tools and a sandbox backend (Linux: bubblewrap + socat;
 Windows: run under WSL2). Two things matter, both learned the hard way:
 
@@ -35,6 +45,15 @@ restore-apply 1/1 with every grader green, and the restored folder matched
 the baseline fixture byte for byte. The apply prompts pre-approve the confirm
 gate in the same message; in every run the model showed the gate and went on
 in the same turn, so no recorded gate turn is needed.
+
+Status 2026-11-12 (after /checkup moved to `scripts/memory-scan`): all five
+cases pass. With Bash granted, checkup-gate and checkup-index-gate pass 3/3
+each and the scanner runs in every trace. forget-gate 3/3 (one earlier run
+scored 0.80 on a split `gate-shape` judge vote; skill text unchanged).
+forget-apply and restore-apply 2/2 with every grader green. Without Bash
+(by-hand fallback) checkup-gate passes; checkup-index-gate is unreliable:
+hand counting 208 files missed the orphans in 2 of 6 runs. Use the Bash
+command above for that case.
 
 Observed behaviour when writes are blocked (useful when reading a partial
 score): /forget applies nothing rather than leave MEMORY.md pointing at files

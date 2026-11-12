@@ -1,7 +1,22 @@
 # Fixture round-trip tests for memory-tools
 
-Run the relevant part after every edit to `skills/*/SKILL.md` or `hooks/`.
+Run the relevant part after every edit to `src/`, `skills/*/SKILL.md`,
+`scripts/` or `hooks/`.
 Parts 1 and 3 each end in a manifest; Part 4 restores it with /restore.
+
+## Where to edit
+
+`skills/forget`, `skills/restore` and `skills/checkup` are generated. Edit
+`src/skills/<name>.md` (the template) or `src/shared/*.md` (text shared by
+several skills: the Locate step, the manifest header, the manifest rules),
+then run `sh scripts/build-skills.sh`. A template line `@include <name>`
+is replaced by `src/shared/<name>.md`. `skills/fresh` and `skills/recall`
+are hand-written. `sh scripts/build-skills.sh --check` (also run by
+`tests/run-scan-test.sh` and CI) fails when a generated file is out of date.
+
+When a part below says "follow skills/checkup/SKILL.md", read
+`${CLAUDE_PLUGIN_ROOT}` as the repo root: the scanner is
+`scripts/memory-scan`.
 
 ## Evals (local only)
 
@@ -118,6 +133,17 @@ the hook ran; `status 126` means the script could not be executed.
 The same script runs in GitHub Actions on Linux and macOS (`.github/workflows/ci.yml`),
 with an informational Windows git-bash job, alongside
 `claude plugin validate . --strict`.
+
+## Part 2b — scanner test (scripted)
+
+    sh tests/run-scan-test.sh
+
+Expected: every line `PASS`, final line `ALL PASS`, exit 0. Covers
+`scripts/memory-scan stamps` (OVERDUE / STAMPED / BADSTAMP / UNSTAMPED tags,
+the exactly-today boundary, CRLF files, nested and body-text stamps ignored,
+`.trash/` never scanned), `scripts/memory-scan index` (line and byte limit,
+NEAR LIMIT at 80%, dangling `(file.md)` and `[[slug]]` targets, orphans, web
+links ignored) and that the generated skills match `src/`.
 
 ## Part 3 — /checkup round trip
 
