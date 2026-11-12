@@ -150,6 +150,11 @@ Release when phases 1 to 3 pass their round trips and the hook test; phase
   removed block) would survive unrelated edits better. Line numbers are
   simpler to write and verify; start there.
 
+## v0.4.1 - shared skill text, memory-scan (shipped 2026-11-12)
+
+See `CHANGELOG.md`. Skills /forget, /restore and /checkup are generated from
+`src/`; the hook and /checkup share `scripts/memory-scan`.
+
 ## v0.4.x candidates
 
 - Lifecycle diagram (`assets/lifecycle.png`) gains the /restore stage.
