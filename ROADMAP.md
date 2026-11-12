@@ -157,7 +157,6 @@ See `CHANGELOG.md`. Skills /forget, /restore and /checkup are generated from
 
 ## v0.4.x candidates
 
-- Lifecycle diagram (`assets/lifecycle.png`) gains the /restore stage.
 - `/checkup`: a MERGE action that folds several index lines into one. Writes
   new text, so it needs its own manifest block and a careful gate.
 - Firmer `.claudeignore` wording: one agent-folder run skipped creating it.
