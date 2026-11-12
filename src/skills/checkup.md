@@ -82,8 +82,9 @@ Copy its numbers into the Step 5 header; never estimate them:
   `.trash/`) that no index line points to.
 
 If the scanner cannot be run (no shell, script not found), measure the same
-four things by hand with `wc -l`, `wc -c` and `grep -n`, and say in the gate
-header that the numbers were measured by hand.
+four things by hand (`wc -l`, `wc -c` and `grep -n`, or the Read and Grep
+tools) and add one line directly under the Step 5 header: "(index numbers
+measured by hand)". The header lines themselves keep their exact shape.
 
 ## Step 4 — Sweep (two passes, in order)
 
