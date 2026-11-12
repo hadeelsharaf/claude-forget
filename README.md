@@ -2,7 +2,7 @@
 
 ![Banner: claude-forget — memory lifecycle for Claude Code auto-memory. Nothing is ever deleted, everything can be undone. Five skill chips: /fresh, /recall, /checkup, /forget, /restore.](assets/banner.png)
 
-Memory lifecycle for Claude Code auto-memory: /forget buries what you discard, /checkup finds what went stale, /fresh works memory-free, and /recall loads the minimum back.
+Memory lifecycle for Claude Code auto-memory: /forget buries what you discard, /checkup finds what went stale, /fresh works memory-free, /recall loads the minimum back, and /restore undoes any of it.
 
 ![Diagram of the memory lifecycle. Five stages in order: /fresh starts at zero with a memory quarantine; /recall pulls the minimum back, read-only, opening exactly one topic file; /checkup reviews past-due review-after stamps, stale status notes and the health of the MEMORY.md index; /forget retires finished work by moving files to .trash with a restore manifest; /restore undoes one /forget or /checkup entry from that manifest. Footer: every step is reversible — no memory file is ever deleted, every cut line is copied verbatim into .trash/TRASH.md before the cut.](assets/lifecycle.png)
 
